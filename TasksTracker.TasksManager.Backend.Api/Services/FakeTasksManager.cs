@@ -4,14 +4,14 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 {
     public class FakeTasksManager : ITasksManager
     {
-        private List<TasksModel> _tasksList = new List<TasksModel>();
+        private List<TaskModel> _tasksList = new List<TaskModel>();
         Random rnd = new Random();
 
         private void GenerateRandomTasks()
         {
             for (int i = 0; i < 10; i++)
             {
-                var task = new TasksModel()
+                var task = new TaskModel()
                 {
                     TaskId = Guid.NewGuid(),
                     TaskName = $"Task number: {i}",
@@ -32,7 +32,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 
         public bool CreateNewTask(string taskName, string createdBy, string assignedTo, DateTime dueDate)
         {
-            var task = new TasksModel()
+            var task = new TaskModel()
             {
                 TaskId = Guid.NewGuid(),
                 TaskName = taskName,
@@ -59,14 +59,14 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
             return false;
         }
 
-        public TasksModel? GetTaskById(Guid taskId)
+        public TaskModel? GetTaskById(Guid taskId)
         {
             var task = _tasksList.FirstOrDefault(t => t.TaskId.Equals(taskId));
 
             return task;
         }
 
-        public List<TasksModel> GetTasksByCreator(string createdBy)
+        public List<TaskModel> GetTasksByCreator(string createdBy)
         {
             var tasks = _tasksList.Where(t => t.TaskCreatedBy.Equals(createdBy)).OrderByDescending(o => o.TaskCreatedOn).ToList();
 

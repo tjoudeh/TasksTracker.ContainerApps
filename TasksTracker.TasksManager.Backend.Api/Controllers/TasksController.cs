@@ -20,7 +20,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<TasksModel> Get(string createdBy)
+        public IEnumerable<TaskModel> Get(string createdBy)
         {
             return _tasksManager.GetTasksByCreator(createdBy);
         }
@@ -60,6 +60,19 @@ namespace TasksTracker.TasksManager.Backend.Api.Controllers
                             taskUpdateModel.TaskName,
                             taskUpdateModel.TaskAssignedTo,
                             taskUpdateModel.TaskDueDate);
+            if (updated)
+            {
+                return Ok();
+            }
+
+            return BadRequest();
+        }
+
+        [HttpPut("{taskId}/markcomplete")]
+        public IActionResult MarkComplete(Guid taskId)
+        {
+            var updated = _tasksManager.MarkTaskCompleted(taskId);
+
             if (updated)
             {
                 return Ok();

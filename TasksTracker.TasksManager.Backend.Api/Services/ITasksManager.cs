@@ -4,9 +4,9 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 {
     public interface ITasksManager
     {
-        List<TasksModel> GetTasksByCreator(string createdBy);
+        List<TaskModel> GetTasksByCreator(string createdBy);
 
-        TasksModel? GetTaskById(Guid taskId);
+        TaskModel? GetTaskById(Guid taskId);
 
         bool CreateNewTask(string taskName, string createdBy, string assignedTo, DateTime dueDate);
 

@@ -30,7 +30,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
             GenerateRandomTasks();
         }
 
-        public bool CreateNewTask(string taskName, string createdBy, string assignedTo, DateTime dueDate)
+        public Task<bool> CreateNewTask(string taskName, string createdBy, string assignedTo, DateTime dueDate)
         {
             var task = new TaskModel()
             {
@@ -43,50 +43,50 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
             };
 
             _tasksList.Add(task);
-            return true;
+            return Task.FromResult(true);
         }
 
-        public bool DeleteTask(Guid taskId)
+        public Task<bool> DeleteTask(Guid taskId)
         {
             var task = _tasksList.FirstOrDefault(t => t.TaskId.Equals(taskId));
 
             if (task != null)
             {
                 _tasksList.Remove(task);
-                return true;
+                return Task.FromResult(true);
             }
 
-            return false;
+            return Task.FromResult(false);
         }
 
-        public TaskModel? GetTaskById(Guid taskId)
+        public Task<TaskModel?> GetTaskById(Guid taskId)
         {
-            var task = _tasksList.FirstOrDefault(t => t.TaskId.Equals(taskId));
+            var taskModel = _tasksList.FirstOrDefault(t => t.TaskId.Equals(taskId));
 
-            return task;
+            return Task.FromResult(taskModel);
         }
 
-        public List<TaskModel> GetTasksByCreator(string createdBy)
+        public Task<List<TaskModel>> GetTasksByCreator(string createdBy)
         {
-            var tasks = _tasksList.Where(t => t.TaskCreatedBy.Equals(createdBy)).OrderByDescending(o => o.TaskCreatedOn).ToList();
+            var tasksList = _tasksList.Where(t => t.TaskCreatedBy.Equals(createdBy)).OrderByDescending(o => o.TaskCreatedOn).ToList();
 
-            return tasks;
+            return Task.FromResult(tasksList);
         }
 
-        public bool MarkTaskCompleted(Guid taskId)
+        public Task<bool> MarkTaskCompleted(Guid taskId)
         {
             var task = _tasksList.FirstOrDefault(t => t.TaskId.Equals(taskId));
 
             if (task != null)
             {
                 task.IsCompleted = true;
-                return true;
+                 return Task.FromResult(true);
             }
 
-            return false;
+             return Task.FromResult(false);
         }
 
-        public bool UpdateTask(Guid taskId, string taskName, string assignedTo, DateTime dueDate)
+        public Task<bool> UpdateTask(Guid taskId, string taskName, string assignedTo, DateTime dueDate)
         {
             var task = _tasksList.FirstOrDefault(t => t.TaskId.Equals(taskId));
 
@@ -95,10 +95,10 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
                 task.TaskName = taskName;
                 task.TaskAssignedTo = assignedTo;
                 task.TaskDueDate = dueDate;
-                return true;
+                 return Task.FromResult(true);
             }
 
-            return false;
+             return Task.FromResult(false);
         }
     }
 }

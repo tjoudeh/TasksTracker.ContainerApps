@@ -4,16 +4,16 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 {
     public interface ITasksManager
     {
-        List<TaskModel> GetTasksByCreator(string createdBy);
+        Task<List<TaskModel>> GetTasksByCreator(string createdBy);
 
-        TaskModel? GetTaskById(Guid taskId);
+        Task<TaskModel?> GetTaskById(Guid taskId);
 
-        bool CreateNewTask(string taskName, string createdBy, string assignedTo, DateTime dueDate);
+        Task<bool> CreateNewTask(string taskName, string createdBy, string assignedTo, DateTime dueDate);
 
-        bool UpdateTask(Guid taskId, string taskName, string assignedTo, DateTime dueDate);
+        Task<bool> UpdateTask(Guid taskId, string taskName, string assignedTo, DateTime dueDate);
 
-        bool MarkTaskCompleted(Guid taskId);
+        Task<bool> MarkTaskCompleted(Guid taskId);
 
-        bool DeleteTask(Guid taskId);
+        Task<bool> DeleteTask(Guid taskId);
     }
 }

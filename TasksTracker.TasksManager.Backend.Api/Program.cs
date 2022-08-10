@@ -1,10 +1,15 @@
+using Dapr.Client;
 using TasksTracker.TasksManager.Backend.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddSingleton<ITasksManager, FakeTasksManager>();
+builder.Services.AddSingleton<DaprClient>(_ => new DaprClientBuilder().Build());
+
+//builder.Services.AddSingleton<ITasksManager, FakeTasksManager>();
+
+builder.Services.AddSingleton<ITasksManager, TasksStoreManager>();
 
 builder.Services.AddControllers();
 

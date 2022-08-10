@@ -20,18 +20,18 @@ namespace TasksTracker.TasksManager.Backend.Api.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<TaskModel> Get(string createdBy)
+        public async Task<IEnumerable<TaskModel>> Get(string createdBy)
         {
-            return _tasksManager.GetTasksByCreator(createdBy);
+            return await _tasksManager.GetTasksByCreator(createdBy);
         }
 
         [HttpGet("{taskId}")]
-        public IActionResult Get(Guid taskId)
+        public async Task<IActionResult> Get(Guid taskId)
         {
-            var task = _tasksManager.GetTaskById(taskId);
+            var task = await _tasksManager.GetTaskById(taskId);
             if (task != null)
             {
-                return Ok(_tasksManager.GetTaskById(taskId));
+                return Ok(task);
             }
 
             return NotFound();
@@ -39,9 +39,9 @@ namespace TasksTracker.TasksManager.Backend.Api.Controllers
         }
 
         [HttpPost]
-        public IActionResult Post([FromBody] TaskAddModel taskAddModel)
+        public async Task<IActionResult> Post([FromBody] TaskAddModel taskAddModel)
         {
-            var created = _tasksManager.CreateNewTask(taskAddModel.TaskName, 
+            var created = await _tasksManager.CreateNewTask(taskAddModel.TaskName, 
                             taskAddModel.TaskCreatedBy, 
                             taskAddModel.TaskAssignedTo, 
                             taskAddModel.TaskDueDate);
@@ -54,12 +54,12 @@ namespace TasksTracker.TasksManager.Backend.Api.Controllers
         }
 
         [HttpPut("{taskId}")]
-        public IActionResult Put(Guid taskId, [FromBody] TaskUpdateModel taskUpdateModel)
+        public async Task<IActionResult> Put(Guid taskId, [FromBody] TaskUpdateModel taskUpdateModel)
         {
-            var updated = _tasksManager.UpdateTask(taskUpdateModel.TaskId,
-                            taskUpdateModel.TaskName,
-                            taskUpdateModel.TaskAssignedTo,
-                            taskUpdateModel.TaskDueDate);
+            var updated = await _tasksManager.UpdateTask(taskId,
+                                                    taskUpdateModel.TaskName,
+                                                    taskUpdateModel.TaskAssignedTo,
+                                                    taskUpdateModel.TaskDueDate);
             if (updated)
             {
                 return Ok();
@@ -69,9 +69,9 @@ namespace TasksTracker.TasksManager.Backend.Api.Controllers
         }
 
         [HttpPut("{taskId}/markcomplete")]
-        public IActionResult MarkComplete(Guid taskId)
+        public async Task<IActionResult> MarkComplete(Guid taskId)
         {
-            var updated = _tasksManager.MarkTaskCompleted(taskId);
+            var updated = await _tasksManager.MarkTaskCompleted(taskId);
 
             if (updated)
             {
@@ -82,9 +82,9 @@ namespace TasksTracker.TasksManager.Backend.Api.Controllers
         }
 
         [HttpDelete("{taskId}")]
-        public IActionResult Delete(Guid taskId)
+        public async Task <IActionResult> Delete(Guid taskId)
         {
-            var deleted = _tasksManager.DeleteTask(taskId);
+            var deleted = await _tasksManager.DeleteTask(taskId);
             if (deleted)
             {
                 return Ok();

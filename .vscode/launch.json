@@ -66,12 +66,38 @@
                 "/Views": "${workspaceFolder}/Views"
             },
             "postDebugTask": "daprd-down-backend-api"
+        },
+        {
+            "name": "Launch (web app) with Dapr",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "webapp-ui-dapr-debug",
+            "program": "${workspaceFolder}/TasksTracker.WebPortal.Frontend.Ui/bin/Debug/net6.0/TasksTracker.WebPortal.Frontend.Ui.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/TasksTracker.WebPortal.Frontend.Ui",
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/Views"
+            },
+            "postDebugTask": "webapp-ui-daprd-down"
         }
     ],
     "compounds": [
         {
             "name": "RunAll",
             "configurations": ["Launch (web app)", "Launch (backend api)",],
+            "stopAll": true
+        },
+        {
+            "name": "RunAll with Dapr",
+            "configurations": ["Launch (backend api) with Dapr", "Launch (web app) with Dapr", ],
             "stopAll": true
         }
     ]

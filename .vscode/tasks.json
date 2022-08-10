@@ -98,6 +98,20 @@
             "appId": "tasksmanager-backend-api",
             "label": "daprd-down-backend-api",
             "type": "daprd-down"
+        },
+        {
+            "appId": "tasksmanager-frontend-webapp",
+            "appPort": 7208,
+            "httpPort": 3501,
+            "appSsl": true,
+            "label": "webapp-ui-dapr-debug",
+            "type": "dapr",
+            "dependsOn": "build-webapp-ui"
+        },
+        {
+            "appId": "tasksmanager-frontend-webapp",
+            "label": "webapp-ui-daprd-down",
+            "type": "daprd-down"
         }
     ]
 }

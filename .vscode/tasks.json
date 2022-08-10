@@ -85,5 +85,19 @@
                 "isDefault": true
             }
         },
+        {
+            "appId": "tasksmanager-backend-api",
+            "appPort": 7088,
+            "httpPort": 3500,
+            "appSsl": true,
+            "label": "backend-api-dapr-debug",
+            "type": "dapr",
+            "dependsOn": "build-backend-api"
+        },
+        {
+            "appId": "tasksmanager-backend-api",
+            "label": "daprd-down-backend-api",
+            "type": "daprd-down"
+        }
     ]
 }

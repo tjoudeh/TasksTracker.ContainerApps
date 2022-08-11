@@ -93,7 +93,8 @@
             "appSsl": true,
             "label": "backend-api-dapr-debug",
             "type": "dapr",
-            "dependsOn": "build-backend-api"
+            "dependsOn": "build-backend-api",
+            "componentsPath": "./components"
         },
         {
             "appId": "tasksmanager-backend-api",

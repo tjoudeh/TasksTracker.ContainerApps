@@ -45,22 +45,14 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 
         public async Task<List<TaskModel>> GetTasksByCreator(string createdBy)
         {
-
             var query = "{" +
-                            "\"filter\": {" +
-                                "\"EQ\": { \"data.taskCreatedBy\": \"tjoudeh@bitoftech.net\" }" +
-                            "}," +
-                            "\"sort\": [" +
-                                "{" +
-                                    "\"key\": \"data.taskCreatedOn\"," +
-                                    "\"order\": \"DESC\"" +
-                                "}" +
-                            "]" +
-                        "}";
+                   "\"filter\": {" +
+                       "\"EQ\": { \"taskCreatedBy\": \"" + createdBy + "\" }" +
+                   "}}";
 
             var queryResponse = await _daprClient.QueryStateAsync<TaskModel>(STORE_NAME, query);
 
-            var tasksList = queryResponse.Results.Select(q => q.Data);
+            var tasksList = queryResponse.Results.Select(q => q.Data).OrderByDescending(o=>o.TaskCreatedOn);
 
             return tasksList.ToList();
         }

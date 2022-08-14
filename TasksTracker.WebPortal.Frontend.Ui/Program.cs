@@ -1,3 +1,5 @@
+using Dapr.Client;
+
 namespace TasksTracker.WebPortal.Frontend.Ui
 {
     public class Program
@@ -14,6 +16,8 @@ namespace TasksTracker.WebPortal.Frontend.Ui
                 httpClient.BaseAddress = new Uri(builder.Configuration.GetValue<string>("BackendApiConfig:BaseUrlExternalHttp"));
        
             });
+
+            builder.Services.AddSingleton<DaprClient>(_ => new DaprClientBuilder().Build());
 
             var app = builder.Build();
 

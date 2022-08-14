@@ -9,8 +9,10 @@ spec:
   - name: url
     value: https://taskstracker-state-store.documents.azure.com:443/
   - name: masterKey
-    value: <secret>
+    value: <value>
   - name: database
     value: tasksmanagerdb
   - name: collection
     value: taskscollection
+scopes:
+- tasksmanager-backend-api   

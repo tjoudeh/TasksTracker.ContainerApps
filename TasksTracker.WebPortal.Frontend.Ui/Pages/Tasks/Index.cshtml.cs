@@ -1,3 +1,4 @@
+using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks.Models;
@@ -8,14 +9,16 @@ namespace TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks
     {
 
         private readonly IHttpClientFactory _httpClientFactory;
+         private readonly DaprClient _daprClient;
         public List<TaskModel>? TasksList { get; set; }
 
         [BindProperty]
         public string? TasksCreatedBy { get; set; }
 
-        public IndexModel(IHttpClientFactory httpClientFactory)
+        public IndexModel(IHttpClientFactory httpClientFactory, DaprClient daprClient)
         {
             _httpClientFactory = httpClientFactory;
+             _daprClient = daprClient;
         }
 
         public async Task OnGetAsync()
@@ -35,26 +38,31 @@ namespace TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks
             //TasksList = result;
 
             // Invoke via DaprSDK
-            var daprCLient = new Dapr.Client.DaprClientBuilder().Build();
-            var result = await daprCLient.InvokeMethodAsync<List<TaskModel>>(HttpMethod.Get, "tasksmanager-backend-api", $"api/tasks?createdBy={TasksCreatedBy}");
+            var result = await _daprClient.InvokeMethodAsync<List<TaskModel>>(HttpMethod.Get, "tasksmanager-backend-api", $"api/tasks?createdBy={TasksCreatedBy}");
             TasksList = result;
 
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(Guid id)
         {
-            var httpClient = _httpClientFactory.CreateClient("BackEndApiExternal");
+            // direct svc to svc http request
+            // var httpClient = _httpClientFactory.CreateClient("BackEndApiExternal");
+            // var result = await httpClient.DeleteAsync($"api/tasks/{id}");
 
-            var result = await httpClient.DeleteAsync($"api/tasks/{id}");
+            //Dapr SideCar Invocation
+            await _daprClient.InvokeMethodAsync(HttpMethod.Delete, "tasksmanager-backend-api", $"api/tasks/{id}");
 
             return RedirectToPage();          
         }
 
         public async Task<IActionResult> OnPostCompleteAsync(Guid id)
         {
-            var httpClient = _httpClientFactory.CreateClient("BackEndApiExternal");
+            // direct svc to svc http request
+            // var httpClient = _httpClientFactory.CreateClient("BackEndApiExternal");
+            // var result = await httpClient.PutAsync($"api/tasks/{id}/markcomplete", null);
 
-            var result = await httpClient.PutAsync($"api/tasks/{id}/markcomplete", null);
+            //Dapr SideCar Invocation
+            await _daprClient.InvokeMethodAsync(HttpMethod.Put, "tasksmanager-backend-api", $"api/tasks/{id}/markcomplete");
 
             return RedirectToPage();
         }

@@ -55,6 +55,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
             var tasksList = queryResponse.Results.Select(q => q.Data).OrderByDescending(o=>o.TaskCreatedOn);
 
             return tasksList.ToList();
+
         }
 
         public async Task<bool> MarkTaskCompleted(Guid taskId)

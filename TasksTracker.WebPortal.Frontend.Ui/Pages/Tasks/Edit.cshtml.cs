@@ -1,3 +1,4 @@
+using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks.Models;
@@ -7,12 +8,15 @@ namespace TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks
     public class EditModel : PageModel
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly DaprClient _daprClient;
+
         [BindProperty]
         public TaskUpdateModel? TaskUpdate { get; set; }
 
-        public EditModel(IHttpClientFactory httpClientFactory)
+        public EditModel(IHttpClientFactory httpClientFactory, DaprClient daprClient)
         {
             _httpClientFactory = httpClientFactory;
+            _daprClient = daprClient;
         }
 
         public async Task<IActionResult> OnGetAsync(Guid? id)
@@ -22,9 +26,12 @@ namespace TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks
                 return NotFound();
             }
 
-            var httpClient = _httpClientFactory.CreateClient("BackEndApiExternal");
+            // direct svc to svc http request
+            // var httpClient = _httpClientFactory.CreateClient("BackEndApiExternal");
+            // var Task = await httpClient.GetFromJsonAsync<TaskModel>($"api/tasks/{id}");
 
-            var Task = await httpClient.GetFromJsonAsync<TaskModel>($"api/tasks/{id}");
+            //Dapr SideCar Invocation
+            var Task = await _daprClient.InvokeMethodAsync<TaskModel>(HttpMethod.Get, "tasksmanager-backend-api", $"api/tasks/{id}");
 
             if (Task == null)
             {
@@ -52,9 +59,12 @@ namespace TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks
 
             if (TaskUpdate != null)
             {
-                var httpClient = _httpClientFactory.CreateClient("BackEndApiExternal");
+                // direct svc to svc http request
+                // var httpClient = _httpClientFactory.CreateClient("BackEndApiExternal");
+                // var result = await httpClient.PutAsJsonAsync($"api/tasks/{TaskUpdate.TaskId}", TaskUpdate);
 
-                var result = await httpClient.PutAsJsonAsync($"api/tasks/{TaskUpdate.TaskId}", TaskUpdate);
+                //Dapr SideCar Invocation
+                await _daprClient.InvokeMethodAsync<TaskUpdateModel>(HttpMethod.Put, "tasksmanager-backend-api", $"api/tasks/{TaskUpdate.TaskId}", TaskUpdate);
 
             }
 

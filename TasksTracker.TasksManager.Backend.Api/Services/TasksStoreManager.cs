@@ -7,6 +7,8 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
     public class TasksStoreManager : ITasksManager
     {
         private static string STORE_NAME = "statestore";
+        private static string PUBSUB_NAME = "taskspubsub";
+         private static string TASK_SAVED_TOPICNAME = "tasksavedtopic";
         private readonly DaprClient _daprClient;
 
         public TasksStoreManager(DaprClient daprClient)
@@ -15,7 +17,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
         }
         public async Task<bool> CreateNewTask(string taskName, string createdBy, string assignedTo, DateTime dueDate)
         {
-            var task = new TaskModel()
+            var taskModel = new TaskModel()
             {
                 TaskId = Guid.NewGuid(),
                 TaskName = taskName,
@@ -25,7 +27,9 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
                 TaskAssignedTo = assignedTo,
             };
 
-            await _daprClient.SaveStateAsync<TaskModel>(STORE_NAME, task.TaskId.ToString(), task);
+            await _daprClient.SaveStateAsync<TaskModel>(STORE_NAME, taskModel.TaskId.ToString(), taskModel);
+
+            await PublishTaskSavedEvent(taskModel);
 
             return true;
         }
@@ -84,10 +88,19 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 
                 await _daprClient.SaveStateAsync<TaskModel>(STORE_NAME, taskModel.TaskId.ToString(), taskModel);
 
+                if (taskModel.TaskAssignedTo != assignedTo){
+                    await PublishTaskSavedEvent(taskModel);
+                }
+
                 return true;
             }
 
             return false;
+        }
+
+        private async Task PublishTaskSavedEvent(TaskModel taskModel){
+            
+            await _daprClient.PublishEventAsync(PUBSUB_NAME, TASK_SAVED_TOPICNAME, taskModel);
         }
     }
 }

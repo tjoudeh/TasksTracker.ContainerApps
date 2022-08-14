@@ -5,7 +5,9 @@ VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TasksTracker.TasksManager.Backend.Api", "TasksTracker.TasksManager.Backend.Api\TasksTracker.TasksManager.Backend.Api.csproj", "{691D0B7F-297E-4EB3-86C5-6722BB56D86A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TasksTracker.WebPortal.Frontend.Ui", "TasksTracker.WebPortal.Frontend.Ui\TasksTracker.WebPortal.Frontend.Ui.csproj", "{4777E182-C3D9-479A-AD58-318E24166CA8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TasksTracker.WebPortal.Frontend.Ui", "TasksTracker.WebPortal.Frontend.Ui\TasksTracker.WebPortal.Frontend.Ui.csproj", "{4777E182-C3D9-479A-AD58-318E24166CA8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TasksTracker.Processor.Backend.Svc", "TasksTracker.Processor.Backend.Svc\TasksTracker.Processor.Backend.Svc.csproj", "{82531671-D01D-449B-B79F-E7215083AA2C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{4777E182-C3D9-479A-AD58-318E24166CA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4777E182-C3D9-479A-AD58-318E24166CA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4777E182-C3D9-479A-AD58-318E24166CA8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82531671-D01D-449B-B79F-E7215083AA2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82531671-D01D-449B-B79F-E7215083AA2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82531671-D01D-449B-B79F-E7215083AA2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82531671-D01D-449B-B79F-E7215083AA2C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

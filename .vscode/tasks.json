@@ -74,10 +74,47 @@
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "build-processor-svc",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/TasksTracker.Processor.Backend.Svc/TasksTracker.Processor.Backend.Svc.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "publish-processor-svc",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/TasksTracker.Processor.Backend.Svc/TasksTracker.Processor.Backend.Svc.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "watch-processor-svc",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "watch",
+                "run",
+                "--project",
+                "${workspaceFolder}/TasksTracker.Processor.Backend.Svc/TasksTracker.Processor.Backend.Svc.csproj"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
             "label": "build-all",
             "dependsOn": [
                 "build-backend-api",
-                "build-webapp-ui"
+                "build-webapp-ui",
+                "build-processor-svc"
             ],
             "problemMatcher": [],
             "group": {
@@ -114,6 +151,22 @@
         {
             "appId": "tasksmanager-frontend-webapp",
             "label": "webapp-ui-daprd-down",
+            "type": "daprd-down"
+        },
+        {
+            "appId": "tasksmanager-backend-processor",
+            "appPort": 7263,
+            "httpPort": 3502,
+            "grpcPort": 50003,
+            "appSsl": true,
+            "label": "processor-svc-dapr-debug",
+            "type": "dapr",
+            "dependsOn": "build-processor-svc",
+            "componentsPath": "./components"
+        },
+        {
+            "appId": "tasksmanager-backend-processor",
+            "label": "processor-svc-daprd-down",
             "type": "daprd-down"
         }
     ]

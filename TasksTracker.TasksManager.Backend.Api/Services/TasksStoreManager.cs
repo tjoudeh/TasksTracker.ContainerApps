@@ -8,6 +8,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
     {
         private static string STORE_NAME = "statestore";
         private static string PUBSUB_NAME = "taskspubsub";
+        private static string PUBSUB_SVCBUS_NAME = "dapr-pubsub-servicebus";
          private static string TASK_SAVED_TOPICNAME = "tasksavedtopic";
         private readonly DaprClient _daprClient;
 
@@ -100,7 +101,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 
         private async Task PublishTaskSavedEvent(TaskModel taskModel){
             
-            await _daprClient.PublishEventAsync(PUBSUB_NAME, TASK_SAVED_TOPICNAME, taskModel);
+            await _daprClient.PublishEventAsync(PUBSUB_SVCBUS_NAME, TASK_SAVED_TOPICNAME, taskModel);
         }
     }
 }

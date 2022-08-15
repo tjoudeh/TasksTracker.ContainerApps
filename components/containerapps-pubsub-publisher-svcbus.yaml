@@ -1,0 +1,13 @@
+# pubsub.yaml for Azure Service Bus component
+componentType: pubsub.azure.servicebus
+version: v1
+metadata:
+- name: connectionString
+  secretRef: sb-root-connectionstring
+secrets:
+- name: sb-root-connectionstring
+  value: ""
+# Application scopes  
+scopes:
+- tasksmanager-backend-api
+- tasksmanager-backend-processor

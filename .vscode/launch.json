@@ -138,7 +138,7 @@
         },
         {
             "name": "RunAll with Dapr",
-            "configurations": [ "Launch (backend api) with Dapr", "Launch (background processor) with Dapr", ],
+            "configurations": [ "Launch (backend api) with Dapr", "Launch (web app) with Dapr", "Launch (background processor) with Dapr", ],
             "stopAll": true
         }
     ]

@@ -50,7 +50,7 @@ namespace TasksTracker.Processor.Backend.Svc.Controllers
             var subject = $"Task '{taskModel.TaskName}' is assigned to you!";
             var to = new EmailAddress(taskModel.TaskAssignedTo, taskModel.TaskAssignedTo);
             var plainTextContent = $"Task '{taskModel.TaskName}' is assigned to you. Task should be completed by the end of: {taskModel.TaskDueDate.ToString("dd/MM/yyyy")}";
-            var htmlContent = $"Task '{taskModel.TaskName}' is assigned to you. Task should be completed by the end of: {taskModel.TaskDueDate.ToString("dd/MM/yyyy")}";
+            var htmlContent = plainTextContent;
             var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
             var response = await client.SendEmailAsync(msg);
 

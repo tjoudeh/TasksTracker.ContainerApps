@@ -1,3 +1,5 @@
+using Microsoft.ApplicationInsights.Extensibility;
+
 namespace TasksTracker.Processor.Backend.Svc
 {
     public class Program
@@ -9,6 +11,12 @@ namespace TasksTracker.Processor.Backend.Svc
             // Add services to the container.
 
             builder.Services.AddControllers().AddDapr();
+
+            builder.Services.AddApplicationInsightsTelemetry();
+            
+            builder.Services.Configure<TelemetryConfiguration>((o) => {
+                o.TelemetryInitializers.Add(new AppInsightsTelemetryInitializer());
+            });
 
             var app = builder.Build();
 

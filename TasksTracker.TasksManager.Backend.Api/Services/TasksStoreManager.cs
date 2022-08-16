@@ -14,11 +14,13 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
         private readonly DaprClient _daprClient;
 
         private readonly IConfiguration _config;
+        private readonly ILogger<TasksStoreManager> _logger;
 
-        public TasksStoreManager(DaprClient daprClient, IConfiguration config)
+        public TasksStoreManager(DaprClient daprClient, IConfiguration config, ILogger<TasksStoreManager> logger)
         {
             _daprClient = daprClient;
             _config = config;
+            _logger = logger;
         }
         public async Task<bool> CreateNewTask(string taskName, string createdBy, string assignedTo, DateTime dueDate)
         {
@@ -32,6 +34,8 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
                 TaskAssignedTo = assignedTo,
             };
 
+            _logger.LogInformation("Save a new task with name: '{0}' to state store", taskModel.TaskName);
+
             await _daprClient.SaveStateAsync<TaskModel>(STORE_NAME, taskModel.TaskId.ToString(), taskModel);
 
             await PublishTaskSavedEvent(taskModel);
@@ -41,12 +45,16 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 
         public async Task<bool> DeleteTask(Guid taskId)
         {
+            _logger.LogInformation("Delete task with Id: '{0}'", taskId);
+
             await _daprClient.DeleteStateAsync(STORE_NAME, taskId.ToString());
             return true;
         }
 
         public async Task<TaskModel?> GetTaskById(Guid taskId)
         {
+            _logger.LogInformation("Getting task with Id: '{0}'", taskId);
+
             var taskModel = await _daprClient.GetStateAsync<TaskModel>(STORE_NAME, taskId.ToString());
 
             return taskModel;
@@ -70,6 +78,9 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
             // return tasksList.ToList();
 
             //Workaround: Query cosmos DB directly
+
+            _logger.LogInformation("Query tasks created by: '{0}'", createdBy);
+
             var result = await QueryCosmosDb(createdBy);
 
             return result;
@@ -106,6 +117,8 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 
         public async Task<bool> MarkTaskCompleted(Guid taskId)
         {
+            _logger.LogInformation("Mark task with Id: '{0}' as completed", taskId);
+
             var taskModel = await _daprClient.GetStateAsync<TaskModel>(STORE_NAME, taskId.ToString());
 
             if (taskModel != null)
@@ -120,6 +133,8 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 
         public async Task<bool> UpdateTask(Guid taskId, string taskName, string assignedTo, DateTime dueDate)
         {
+            _logger.LogInformation("Update task with Id: '{0}'", taskId);
+
             var taskModel = await _daprClient.GetStateAsync<TaskModel>(STORE_NAME, taskId.ToString());
 
             var currentAssignee = taskModel.TaskAssignedTo;
@@ -145,6 +160,8 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 
         private async Task PublishTaskSavedEvent(TaskModel taskModel)
         {
+            _logger.LogInformation("Publish Task Saved event for task with Id: '{0}' and Name: '{1}' for Assigne: '{2}'", 
+                                                                taskModel.TaskId, taskModel.TaskName, taskModel.TaskAssignedTo);
 
             await _daprClient.PublishEventAsync(PUBSUB_SVCBUS_NAME, TASK_SAVED_TOPICNAME, taskModel);
         }

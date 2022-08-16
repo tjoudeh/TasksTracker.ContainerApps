@@ -1,4 +1,5 @@
 using Dapr.Client;
+using Microsoft.ApplicationInsights.Extensibility;
 
 namespace TasksTracker.WebPortal.Frontend.Ui
 {
@@ -18,6 +19,12 @@ namespace TasksTracker.WebPortal.Frontend.Ui
             });
 
             builder.Services.AddSingleton<DaprClient>(_ => new DaprClientBuilder().Build());
+
+            builder.Services.AddApplicationInsightsTelemetry();
+
+            builder.Services.Configure<TelemetryConfiguration>((o) => {
+                o.TelemetryInitializers.Add(new AppInsightsTelemetryInitializer());
+            });
 
             var app = builder.Build();
 

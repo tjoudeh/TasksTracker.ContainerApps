@@ -1,0 +1,14 @@
+componentType: state.azure.blobstorage
+version: v1
+metadata:
+- name: accountName
+  value: "taskstracker"
+- name: accountKey
+  secretRef: storagekey
+- name: containerName
+  value: "periodicjobcontainer"
+secrets:
+- name: storagekey
+  value: ""
+scopes:
+- tasksmanager-backend-processor

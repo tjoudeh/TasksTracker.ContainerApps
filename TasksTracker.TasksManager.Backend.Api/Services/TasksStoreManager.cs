@@ -11,6 +11,11 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
         private static string PUBSUB_NAME = "taskspubsub";
         private static string PUBSUB_SVCBUS_NAME = "dapr-pubsub-servicebus";
         private static string TASK_SAVED_TOPICNAME = "tasksavedtopic";
+
+        private static string databaseName = "tasksmanagerdb";
+        private static string containerName = "taskscollection";
+        private static string account = "https://taskstracker-state-store.documents.azure.com:443/";
+
         private readonly DaprClient _daprClient;
 
         private readonly IConfiguration _config;
@@ -89,11 +94,8 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 
         private async Task<List<TaskModel>> QueryCosmosDb(string createdBy)
         {
-            var databaseName = "tasksmanagerdb";
-            var containerName = "taskscollection";
-            var account = "https://taskstracker-state-store.documents.azure.com:443/";
-            var cosmosKey = _config.GetValue<string>("cosmosDb:key");
 
+            var cosmosKey = _config.GetValue<string>("cosmosDb:key");
             var cosmosClient = new CosmosClient(account, cosmosKey);
             var container = cosmosClient.GetContainer(databaseName, containerName);
 
@@ -115,6 +117,32 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
             return results;
         }
 
+
+        public async Task<List<TaskModel>> GetTasksByTime(DateTime waterMark)
+        {
+
+            var cosmosKey = _config.GetValue<string>("cosmosDb:key");
+            var cosmosClient = new CosmosClient(account, cosmosKey);
+            var container = cosmosClient.GetContainer(databaseName, containerName);
+
+            var queryString = $"SELECT * FROM C['value'] as tasksList Where tasksList.taskCreatedOn > @taskCreatedOn";
+            var queryDefinition = new QueryDefinition(queryString).WithParameter("@taskCreatedOn", waterMark);
+
+            using FeedIterator<TaskModel> feed = container.GetItemQueryIterator<TaskModel>(queryDefinition: queryDefinition);
+
+            var results = new List<TaskModel>();
+
+            while (feed.HasMoreResults)
+            {
+                FeedResponse<TaskModel> response = await feed.ReadNextAsync();
+
+                results.AddRange(response.ToList());
+
+            }
+
+            return results;
+        }
+
         public async Task<bool> MarkTaskCompleted(Guid taskId)
         {
             _logger.LogInformation("Mark task with Id: '{0}' as completed", taskId);
@@ -129,6 +157,17 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
             }
 
             return false;
+        }
+
+        public async Task MarkOverdueTasks(List<TaskModel> overDueTasksList)
+        {
+            foreach (var taskModel in overDueTasksList)
+            {
+                _logger.LogInformation("Mark task with Id: '{0}' as OverDue task", taskModel.TaskId);
+                taskModel.IsOverDue = true;
+                await _daprClient.SaveStateAsync<TaskModel>(STORE_NAME, taskModel.TaskId.ToString(), taskModel);
+            }
+           
         }
 
         public async Task<bool> UpdateTask(Guid taskId, string taskName, string assignedTo, DateTime dueDate)
@@ -160,7 +199,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 
         private async Task PublishTaskSavedEvent(TaskModel taskModel)
         {
-            _logger.LogInformation("Publish Task Saved event for task with Id: '{0}' and Name: '{1}' for Assigne: '{2}'", 
+            _logger.LogInformation("Publish Task Saved event for task with Id: '{0}' and Name: '{1}' for Assigne: '{2}'",
                                                                 taskModel.TaskId, taskModel.TaskName, taskModel.TaskAssignedTo);
 
             await _daprClient.PublishEventAsync(PUBSUB_SVCBUS_NAME, TASK_SAVED_TOPICNAME, taskModel);

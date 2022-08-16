@@ -11,13 +11,17 @@ namespace TasksTracker.Processor.Backend.Svc.Controllers
     [ApiController]
     public class TasksNotifierController : ControllerBase
     {
+         private static string STORE_NAME = "emaillogsstatestore";
         private readonly IConfiguration _config;
         private readonly ILogger _logger;
 
-        public TasksNotifierController(IConfiguration config, ILogger<TasksNotifierController> logger)
+              private readonly DaprClient _daprClient;
+
+        public TasksNotifierController(IConfiguration config, ILogger<TasksNotifierController> logger, DaprClient daprClient)
         {
             _config = config;
             _logger = logger;
+             _daprClient = daprClient;
         }
 
         public IActionResult Get()
@@ -57,6 +61,12 @@ namespace TasksTracker.Processor.Backend.Svc.Controllers
             if (response.IsSuccessStatusCode)
             {
                 _logger.LogInformation("Email with subject '{0}' sent to: '{1}' successfuly", subject, taskModel.TaskAssignedTo);
+
+                await _daprClient.SaveStateAsync(STORE_NAME, 
+                                                        $"{taskModel.TaskId.ToString()}_{taskModel.TaskAssignedTo}", 
+                                                        new EmailLogModel() {EmailTo = to.Email, EmailContent = plainTextContent});
+
+                 _logger.LogInformation("Email log for task with id: {0} saved successfuly", taskModel.TaskId);
             }
             else
             {
@@ -66,6 +76,12 @@ namespace TasksTracker.Processor.Backend.Svc.Controllers
             return new Tuple<bool, string>(response.IsSuccessStatusCode, response.StatusCode.ToString());
 
         }
+    }
+
+    public class EmailLogModel
+    {
+        public string EmailTo { get; set; } = string.Empty;
+        public string EmailContent { get; set; } = string.Empty;
     }
 
 }

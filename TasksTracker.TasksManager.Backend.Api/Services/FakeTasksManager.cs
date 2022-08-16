@@ -100,5 +100,15 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 
              return Task.FromResult(false);
         }
+
+        public Task<List<TaskModel>> GetTasksByTime(DateTime waterMark)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task MarkOverdueTasks(List<TaskModel> overDueTasksList)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -1,0 +1,16 @@
+componentType: state.azure.tablestorage
+version: v1
+metadata:
+- name: accountName
+  value: "taskstracker"
+- name: accountKey
+  secretRef: storagekey
+- name: tableName
+  value: "emaillogs"
+- name: cosmosDbMode
+  value: false
+secrets:
+- name: storagekey
+  value: ""
+scopes:
+- tasksmanager-backend-processor

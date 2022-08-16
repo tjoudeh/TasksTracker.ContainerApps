@@ -1,0 +1,9 @@
+# pubsub.yaml for Azure Service Bus component
+componentType: bindings.cron
+version: v1
+metadata:
+- name: schedule
+  value: "@every 6h"
+# Application scopes  
+scopes:
+- tasksmanager-backend-processor

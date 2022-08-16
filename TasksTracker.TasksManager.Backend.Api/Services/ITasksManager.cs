@@ -15,5 +15,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
         Task<bool> MarkTaskCompleted(Guid taskId);
 
         Task<bool> DeleteTask(Guid taskId);
+        Task<List<TaskModel>> GetTasksByTime(DateTime waterMark);
+        Task MarkOverdueTasks(List<TaskModel> overdueTasksList);
     }
 }

@@ -45,14 +45,6 @@ namespace TasksTracker.Processor.Backend.Svc.Controllers
         {
 
             var apiKey = _config.GetValue<string>("SendGrid:ApiKey");
-            if (!string.IsNullOrEmpty(apiKey))
-            {
-                _logger.LogInformation("SendGrid ApiKey:{0}", apiKey.Substring(0,10));
-            }
-           else
-            {
-                _logger.LogWarning("Failed to load SendGrid API key from Env variables");
-            }
             var client = new SendGridClient(apiKey);
             var from = new EmailAddress("taiseer.joudeh@gmail.com", "Tasks Tracker Notification");
             var subject = $"Task '{taskModel.TaskName}' is assigned to you!";

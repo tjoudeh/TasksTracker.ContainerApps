@@ -26,7 +26,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Controllers
         }
 
         [HttpGet("{taskId}")]
-        public async Task<IActionResult> Get(Guid taskId)
+        public async Task<IActionResult> GetTask(Guid taskId)
         {
             var task = await _tasksManager.GetTaskById(taskId);
             if (task != null)
@@ -35,22 +35,20 @@ namespace TasksTracker.TasksManager.Backend.Api.Controllers
             }
 
             return NotFound();
-           
+
         }
 
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] TaskAddModel taskAddModel)
         {
-            var created = await _tasksManager.CreateNewTask(taskAddModel.TaskName, 
-                            taskAddModel.TaskCreatedBy, 
-                            taskAddModel.TaskAssignedTo, 
-                            taskAddModel.TaskDueDate);
-            if (created)
-            {
-                return Ok();
-            }
+            var taskId = await _tasksManager.CreateNewTask(taskAddModel.TaskName,
+                                taskAddModel.TaskCreatedBy,
+                                taskAddModel.TaskAssignedTo,
+                                taskAddModel.TaskDueDate);
 
-            return BadRequest();
+        
+            return Created($"/api/tasks/{taskId}", null);
+
         }
 
         [HttpPut("{taskId}")]
@@ -82,7 +80,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Controllers
         }
 
         [HttpDelete("{taskId}")]
-        public async Task <IActionResult> Delete(Guid taskId)
+        public async Task<IActionResult> Delete(Guid taskId)
         {
             var deleted = await _tasksManager.DeleteTask(taskId);
             if (deleted)

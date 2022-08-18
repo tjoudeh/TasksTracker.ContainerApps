@@ -8,7 +8,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 
         Task<TaskModel?> GetTaskById(Guid taskId);
 
-        Task<bool> CreateNewTask(string taskName, string createdBy, string assignedTo, DateTime dueDate);
+        Task<Guid> CreateNewTask(string taskName, string createdBy, string assignedTo, DateTime dueDate);
 
         Task<bool> UpdateTask(Guid taskId, string taskName, string assignedTo, DateTime dueDate);
 

@@ -27,7 +27,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
             _config = config;
             _logger = logger;
         }
-        public async Task<bool> CreateNewTask(string taskName, string createdBy, string assignedTo, DateTime dueDate)
+        public async Task<Guid> CreateNewTask(string taskName, string createdBy, string assignedTo, DateTime dueDate)
         {
             var taskModel = new TaskModel()
             {
@@ -45,7 +45,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 
             await PublishTaskSavedEvent(taskModel);
 
-            return true;
+            return taskModel.TaskId;
         }
 
         public async Task<bool> DeleteTask(Guid taskId)

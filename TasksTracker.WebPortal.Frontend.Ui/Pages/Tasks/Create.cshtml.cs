@@ -9,7 +9,7 @@ namespace TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks
     {
 
         private readonly IHttpClientFactory _httpClientFactory;
-private readonly DaprClient _daprClient;
+        private readonly DaprClient _daprClient;
 
         public CreateModel(IHttpClientFactory httpClientFactory, DaprClient daprClient)
         {

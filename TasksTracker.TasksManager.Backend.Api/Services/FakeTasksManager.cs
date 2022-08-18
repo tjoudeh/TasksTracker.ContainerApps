@@ -30,7 +30,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
             GenerateRandomTasks();
         }
 
-        public Task<bool> CreateNewTask(string taskName, string createdBy, string assignedTo, DateTime dueDate)
+        public Task<Guid> CreateNewTask(string taskName, string createdBy, string assignedTo, DateTime dueDate)
         {
             var task = new TaskModel()
             {
@@ -43,7 +43,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
             };
 
             _tasksList.Add(task);
-            return Task.FromResult(true);
+            return Task.FromResult(task.TaskId);
         }
 
         public Task<bool> DeleteTask(Guid taskId)

@@ -49,6 +49,9 @@ namespace TasksTracker.Processor.Backend.Svc.Controllers
         {
 
             var apiKey = _config.GetValue<string>("SendGrid:ApiKey");
+            var integrationEnabled = _config.GetValue<bool>("SendGrid:IntegrationEnabled");
+            var sendEmailResponse = true;
+            var sendEmailStatusCode = System.Net.HttpStatusCode.Accepted;
             var client = new SendGridClient(apiKey);
             var from = new EmailAddress("taiseer.joudeh@gmail.com", "Tasks Tracker Notification");
             var subject = $"Task '{taskModel.TaskName}' is assigned to you!";
@@ -56,30 +59,44 @@ namespace TasksTracker.Processor.Backend.Svc.Controllers
             var plainTextContent = $"Task '{taskModel.TaskName}' is assigned to you. Task should be completed by the end of: {taskModel.TaskDueDate.ToString("dd/MM/yyyy")}";
             var htmlContent = plainTextContent;
             var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
-            var response = await client.SendEmailAsync(msg);
+           
+            //Send actual email using SendGrid API (Disbled when running load test)
+            if (integrationEnabled)
+            {
+                var response = await client.SendEmailAsync(msg);
+                sendEmailResponse = response.IsSuccessStatusCode;
+                sendEmailStatusCode = response.StatusCode;
+            }
+            else
+            {
+                //Introduce artificial delay to slow down message processing
+                _logger.LogInformation("Simulate slow processing for email sending for Email with Email subject '{0}' Email to: '{1}'", subject, taskModel.TaskAssignedTo);
+                Thread.Sleep(5000);
+            }
 
-            if (response.IsSuccessStatusCode)
+            if (sendEmailResponse)
             {
                 _logger.LogInformation("Email with subject '{0}' sent to: '{1}' successfuly", subject, taskModel.TaskAssignedTo);
 
                 await _daprClient.SaveStateAsync(STORE_NAME,
-                                                        $"{taskModel.TaskId.ToString()}_{taskModel.TaskAssignedTo}",
-                                                        new EmailLogModel() { EmailTo = to.Email, EmailContent = plainTextContent });
+                                                        $"{Guid.NewGuid().ToString()}_{taskModel.TaskAssignedTo}",
+                                                        new EmailLogModel() { TaskId = taskModel.TaskId,  EmailTo = to.Email, EmailContent = plainTextContent });
 
                 _logger.LogInformation("Email log for task with id: {0} saved successfuly", taskModel.TaskId);
             }
             else
             {
-                _logger.LogWarning("Failed to send email with subject '{0}' To: '{1}'. Status Code: {2}", subject, taskModel.TaskAssignedTo, response.StatusCode);
+                _logger.LogWarning("Failed to send email with subject '{0}' To: '{1}'. Status Code: {2}", subject, taskModel.TaskAssignedTo, sendEmailStatusCode);
             }
 
-            return new Tuple<bool, string>(response.IsSuccessStatusCode, response.StatusCode.ToString());
+            return new Tuple<bool, string>(sendEmailResponse, sendEmailStatusCode.ToString());
 
         }
     }
 
     public class EmailLogModel
     {
+        public Guid TaskId { get; set; }
         public string EmailTo { get; set; } = string.Empty;
         public string EmailContent { get; set; } = string.Empty;
     }

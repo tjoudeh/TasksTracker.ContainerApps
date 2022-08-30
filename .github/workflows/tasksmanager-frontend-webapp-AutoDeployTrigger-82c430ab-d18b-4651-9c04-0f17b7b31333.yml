@@ -7,7 +7,7 @@ on:
     branches: 
       [ dev ]
     paths:
-    - 'TasksTracker.WebPortal.Frontend.Ui/dockerfile/**'
+    - 'TasksTracker.WebPortal.Frontend.Ui/**'
     - '.github/workflows/tasksmanager-frontend-webapp-AutoDeployTrigger-82c430ab-d18b-4651-9c04-0f17b7b31333.yml'
 
   # Allow mannually trigger 
@@ -36,8 +36,8 @@ jobs:
         with:
           push: true
           tags: taskstrackeracr.azurecr.io/tasksmanager-frontend-webapp:${{ github.sha }}
-          file: ./TasksTracker.WebPortal.Frontend.Ui/dockerfile/Dockerfile
-          context: ./TasksTracker.WebPortal.Frontend.Ui/dockerfile/
+          file: ./TasksTracker.WebPortal.Frontend.Ui/Dockerfile
+          context: ./TasksTracker.WebPortal.Frontend.Ui/
 
 
   deploy:

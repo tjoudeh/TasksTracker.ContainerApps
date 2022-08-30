@@ -37,7 +37,7 @@ jobs:
           push: true
           tags: taskstrackeracr.azurecr.io/tasksmanager-frontend-webapp:${{ github.sha }}
           file: TasksTracker.WebPortal.Frontend.Ui/Dockerfile
-          context: TasksTracker.WebPortal.Frontend.Ui/
+          context: ./.
 
 
   deploy:

@@ -8,7 +8,7 @@ on:
       [ dev ]
     paths:
     - 'TasksTracker.TasksManager.Backend.Api/**'
-    - '.github/workflows/build-deploy-backend.yaml'
+    - '.github/workflows/build-deploy-backend-api.yaml'
 
   # Allow mannually trigger 
   workflow_dispatch:      

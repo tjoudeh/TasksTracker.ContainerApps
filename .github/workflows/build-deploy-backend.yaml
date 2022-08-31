@@ -35,7 +35,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: taskstrackeracr.azurecr.io/tasksmanager-backend-api:${{ github.run_attempt }}
+          tags: taskstrackeracr.azurecr.io/tasksmanager-backend-api:${{ github.sha }}
           file: TasksTracker.TasksManager.Backend.Api/Dockerfile
           context: ./.
 
@@ -57,4 +57,4 @@ jobs:
           inlineScript: |
             az config set extension.use_dynamic_install=yes_without_prompt
             az containerapp registry set -n tasksmanager-backend-api -g tasks-tracker-rg --server taskstrackeracr.azurecr.io --username  ${{ secrets.TASKSMANAGER_REGISTRY_USERNAME }} --password ${{ secrets.TASKSMANAGER_REGISTRY_PASSWORD }}
-            az containerapp update -n tasksmanager-backend-api -g tasks-tracker-rg --image taskstrackeracr.azurecr.io/tasksmanager-backend-api:${{ github.run_attempt }} --revision-suffix v-tag-${{ github.run_attempt }}
+            az containerapp update -n tasksmanager-backend-api -g tasks-tracker-rg --image taskstrackeracr.azurecr.io/tasksmanager-backend-api:${{ github.sha }}

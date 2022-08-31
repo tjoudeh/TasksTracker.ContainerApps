@@ -8,7 +8,7 @@ on:
       [ dev ]
     paths:
     - 'TasksTracker.WebPortal.Frontend.Ui/**'
-    - '.github/workflows/build-deploy-frontend.yml'
+    - '.github/workflows/build-deploy-frontend.yaml'
 
   # Allow mannually trigger 
   workflow_dispatch:      

@@ -1,0 +1,18 @@
+componentType: bindings.azure.blobstorage
+version: v1
+metadata:
+- name: storageAccount
+  value: "taskstracker"
+- name: storageAccessKey
+  secretRef: storagekey
+- name: container
+  value: "externaltaskscontainer"
+- name: decodeBase64
+  value: "false"
+- name: publicAccessLevel
+  value: "none"    
+secrets:
+- name: storagekey
+  value: "<value>"
+scopes:
+- tasksmanager-backend-processor

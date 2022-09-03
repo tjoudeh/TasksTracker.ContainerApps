@@ -1,0 +1,20 @@
+componentType: bindings.azure.storagequeues
+version: v1
+metadata:
+- name: storageAccount
+  value: "taskstracker"
+- name: storageAccessKey
+  secretRef: storagekey
+- name: queue
+  value: "external-tasks-queue"
+- name: ttlInSeconds
+  value: "60"
+- name: decodeBase64
+  value: "true"
+- name: route
+  value: /externaltasksprocessor/process        
+secrets:
+- name: storagekey
+  value: "<value>"
+scopes:
+- tasksmanager-backend-processor

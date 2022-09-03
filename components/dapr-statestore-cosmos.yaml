@@ -15,4 +15,4 @@ spec:
   - name: collection
     value: taskscollection
 scopes:
-- tasksmanager-backend-api   
+- tasksmanager-backend-api

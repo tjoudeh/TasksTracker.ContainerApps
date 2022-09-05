@@ -1,0 +1,16 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: emaillogsstatestore
+spec:
+  type: state.azure.tablestorage
+  version: v1
+  metadata:
+  - name: accountName
+    value: taskstracker
+  - name: accountKey
+    value: ""
+  - name: tableName
+    value: emaillogs
+  - name: cosmosDbMode
+    value: false

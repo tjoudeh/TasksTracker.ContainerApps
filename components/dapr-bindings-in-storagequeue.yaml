@@ -12,8 +12,6 @@ spec:
     value: "" 
   - name: queue
     value: "external-tasks-queue"
-  - name: ttlInSeconds
-    value: "60"
   - name: decodeBase64
     value: "true"
   - name: route

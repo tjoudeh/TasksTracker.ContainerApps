@@ -1,0 +1,14 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: periodicjobstatestore
+spec:
+  type: state.azure.blobstorage
+  version: v1
+  metadata:
+  - name: accountName
+    value: "taskstracker"
+  - name: accountKey
+    value: ""
+  - name: containerName
+    value: "periodicjobcontainer"

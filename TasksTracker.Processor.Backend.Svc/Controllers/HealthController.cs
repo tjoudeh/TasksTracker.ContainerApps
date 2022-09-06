@@ -50,7 +50,7 @@ namespace TasksTracker.Processor.Backend.Svc.Controllers
             }
             catch (Exception e)
             {
-                _logger.LogCritical(e, "Exception while invoking Reasiness prob");
+                _logger.LogCritical(e, "Exception while invoking Readiness prob");
                 return new StatusCodeResult(StatusCodes.Status503ServiceUnavailable);
             }
 

@@ -1,4 +1,3 @@
-# pubsub.yaml for Azure Service Bus component
 componentType: bindings.cron
 version: v1
 metadata:

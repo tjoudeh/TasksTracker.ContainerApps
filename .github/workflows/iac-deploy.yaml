@@ -1,0 +1,34 @@
+name: Deploy all resources to Azure
+
+on:
+  workflow_dispatch:
+    inputs:
+      resourceGroup:
+        description: 'Resource Group Name'
+        type: string
+        required: true
+
+jobs:
+
+  deploy-bicep:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - uses: azure/login@v1
+        with:
+          creds: ${{ secrets.TASKSMANAGER_AZURE_CREDENTIALS }}
+
+      - name: deploy
+        uses: azure/arm-deploy@v1
+        with:
+          subscriptionId: ${{ secrets.TASKSMANAGER_AZURE_SUBSCRIPTION }}
+          resourceGroupName: ${{ inputs.resourceGroup }}
+          template: ./main.bicep
+          parameters: containerRegistryPassword=${{ secrets.TASKSMANAGER_REGISTRY_PASSWORD }} sendGridApiKey=${{ secrets.TASKSMANAGER_SENDGRID_APIKEY }}
+          failOnStdErr: false

@@ -8,6 +8,6 @@ spec:
   version: v1
   metadata:
   - name: schedule
-    value: "@every 2m"
+    value: "@every 10m"
 scopes:
 - tasksmanager-backend-processor

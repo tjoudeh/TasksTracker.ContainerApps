@@ -11,13 +11,9 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
         private static string PUBSUB_NAME = "taskspubsub";
         private static string PUBSUB_SVCBUS_NAME = "dapr-pubsub-servicebus";
         private static string TASK_SAVED_TOPICNAME = "tasksavedtopic";
-
         private static string databaseName = "tasksmanagerdb";
         private static string containerName = "taskscollection";
-        private static string account = "https://taskstracker-state-store.documents.azure.com:443/";
-
         private readonly DaprClient _daprClient;
-
         private readonly IConfiguration _config;
         private readonly ILogger<TasksStoreManager> _logger;
 
@@ -96,6 +92,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
         {
 
             var cosmosKey = _config.GetValue<string>("cosmosDb:key");
+            var account = _config.GetValue<string>("cosmosDb:accountUrl");
             var cosmosClient = new CosmosClient(account, cosmosKey);
             var container = cosmosClient.GetContainer(databaseName, containerName);
 
@@ -122,6 +119,7 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
         {
 
             var cosmosKey = _config.GetValue<string>("cosmosDb:key");
+            var account = _config.GetValue<string>("cosmosDb:accountUrl");
             var cosmosClient = new CosmosClient(account, cosmosKey);
             var container = cosmosClient.GetContainer(databaseName, containerName);
 

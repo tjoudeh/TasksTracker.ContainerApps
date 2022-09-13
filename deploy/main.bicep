@@ -1,7 +1,5 @@
-
 param appname string = 'taskstrackertest'
 param location string = 'eastus'
-
 
 param backendApiName string = 'tasksmanager-backend-api'
 param backendApiImage string = '${containerRegistry}/${backendApiName}:latest'

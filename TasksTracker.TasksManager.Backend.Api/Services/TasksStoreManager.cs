@@ -67,24 +67,24 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
             //issue and prodcut team is wokring on it. Details of the issue is here: https://github.com/microsoft/azure-container-apps/issues/155
             //Due to this issue, we will query directly the cosmos db to list tasks per created by user.
 
-            // var query = "{" +
-            //        "\"filter\": {" +
-            //            "\"EQ\": { \"taskCreatedBy\": \"" + createdBy + "\" }" +
-            //        "}}";
+            _logger.LogInformation("Query tasks created by: '{0}'", createdBy);
 
-            // var queryResponse = await _daprClient.QueryStateAsync<TaskModel>(STORE_NAME, query);
+            var query = "{" +
+                   "\"filter\": {" +
+                       "\"EQ\": { \"taskCreatedBy\": \"" + createdBy + "\" }" +
+                   "}}";
 
-            // var tasksList = queryResponse.Results.Select(q => q.Data).OrderByDescending(o=>o.TaskCreatedOn);
+            var queryResponse = await _daprClient.QueryStateAsync<TaskModel>(STORE_NAME, query);
 
-            // return tasksList.ToList();
+            var tasksList = queryResponse.Results.Select(q => q.Data).OrderByDescending(o=>o.TaskCreatedOn);
+
+            return tasksList.ToList();
 
             //Workaround: Query cosmos DB directly
 
-            _logger.LogInformation("Query tasks created by: '{0}'", createdBy);
+            // var result = await QueryCosmosDb(createdBy);
 
-            var result = await QueryCosmosDb(createdBy);
-
-            return result;
+            // return result;
 
         }
 

@@ -57,4 +57,4 @@ jobs:
           inlineScript: |
             az config set extension.use_dynamic_install=yes_without_prompt
             az containerapp registry set -n tasksmanager-backend-processor -g tasks-tracker-rg --server taskstrackeracr.azurecr.io --username  ${{ secrets.TASKSMANAGER_REGISTRY_USERNAME }} --password ${{ secrets.TASKSMANAGER_REGISTRY_PASSWORD }}
-            az containerapp update -n tasksmanager-backend-processor -g tasks-tracker-rg --image taskstrackeracr.azurecr.io/tasksmanager-backend-processor:latest
+            az containerapp update -n tasksmanager-backend-processor -g tasks-tracker-rg --image taskstrackeracr.azurecr.io/tasksmanager-backend-processor:${{ github.sha }}

@@ -1,6 +1,6 @@
 param containerAppName string
-param location string 
-param environmentName string 
+param location string = resourceGroup().location
+param environmentId string 
 param containerImage string
 param targetPort int
 param isExternalIngress bool
@@ -8,32 +8,27 @@ param containerRegistry string
 param containerRegistryUsername string
 param isPrivateRegistry bool
 param enableIngress bool 
-param registryPassword string
+param registryPassName string
 param minReplicas int = 0
 param maxReplicas int = 1
-param secretsList array = []
+param secList array = []
 param envList array = []
 param revisionMode string = 'Single'
 param useProbes bool = false
-
-
-resource environment 'Microsoft.App/managedEnvironments@2022-03-01' existing = {
-  name: environmentName
-}
 
 resource containerApp 'Microsoft.App/containerApps@2022-03-01' = {
   name: containerAppName
   location: location
   properties: {
-    managedEnvironmentId: environment.id
+    managedEnvironmentId: environmentId
     configuration: {
       activeRevisionsMode: revisionMode
-      secrets: secretsList
+      secrets: secList
       registries: isPrivateRegistry ? [
         {
           server: containerRegistry
           username: containerRegistryUsername
-          passwordSecretRef: registryPassword
+          passwordSecretRef: registryPassName
         }
       ] : null
       ingress: enableIngress ? {

@@ -1,5 +1,5 @@
 param acaEnvironmentName string
-param location string = 'eastus'
+param location string = resourceGroup().location
 param instrumentationKey string
 param logAnalyticsWorkspaceCustomerId string
 param logAnalyticsWorkspacePrimarySharedKey string 

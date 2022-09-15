@@ -24,7 +24,6 @@ param sendGridApiKey string = ''
 
 var environmentName = '${appname}-env'
 
-
 // Cosmosdb
 var cosmosDbResName = '${appname}-cosmos'
 module cosmosdb 'cosmosdb.bicep' = {
@@ -40,42 +39,42 @@ module cosmosdb 'cosmosdb.bicep' = {
 
 // Servicebus
 var serviceBusResName = appname
-module serviceBus 'serviceBus.bicep' ={
+module serviceBus 'serviceBus.bicep' = {
   name: '${deployment().name}--serviceBus'
   params: {
-     serviceBusName: serviceBusResName
-      location:location
+    serviceBusName: serviceBusResName
+    location: location
   }
 }
 
 //StorageAccount
 var storageAccountResName = appname
-module storageAccount 'storageAccount.bicep' ={
+module storageAccount 'storageAccount.bicep' = {
   name: '${deployment().name}--storageAccount'
   params: {
-     storageAccountName: storageAccountResName
-     location:location
- }
+    storageAccountName: storageAccountResName
+    location: location
+  }
 }
 
 //logAnalyticsWorkspace
 var logAnalyticsWorkspaceResName = '${appname}-logs'
 module logAnalyticsWorkspace 'logAnalyticsWorkspace.bicep' = {
   name: '${deployment().name}--logAnalyticsWorkspace'
-  params:{
-     logAnalyticsWorkspaceName: logAnalyticsWorkspaceResName
-      location: location
+  params: {
+    logAnalyticsWorkspaceName: logAnalyticsWorkspaceResName
+    location: location
   }
 }
 
 //AppInsights
 var appInsightsResName = '${appname}-ai'
-module appInsights 'appInsights.bicep'={
+module appInsights 'appInsights.bicep' = {
   name: '${deployment().name}--appInsights'
   params: {
-     appInsightsName: appInsightsResName
-     location: location
-      workspaceResourceId: logAnalyticsWorkspace.outputs.workspaceResourceId
+    appInsightsName: appInsightsResName
+    location: location
+    workspaceResourceId: logAnalyticsWorkspace.outputs.workspaceResourceId
   }
 }
 
@@ -111,13 +110,17 @@ var serviceBusConStringValue = 'Endpoint=sb://${serviceBusResName}.servicebus.wi
 
 // Container Apps Environment 
 module environment 'acaEnvironment.bicep' = {
+dependsOn: [
+appInsights
+logAnalyticsWorkspaceResource
+]
   name: '${deployment().name}--acaenvironment'
   params: {
     acaEnvironmentName: environmentName
     location: location
-     instrumentationKey: appInsightsResource.properties.InstrumentationKey
-      logAnalyticsWorkspaceCustomerId: logAnalyticsWorkspace.outputs.logAnalyticsWorkspaceCustomerId
-       logAnalyticsWorkspacePrimarySharedKey: listKeys(logAnalyticsWorkspaceResource.id, logAnalyticsWorkspaceResource.apiVersion).primarySharedKey
+    instrumentationKey: appInsightsResource.properties.InstrumentationKey
+    logAnalyticsWorkspaceCustomerId: logAnalyticsWorkspace.outputs.logAnalyticsWorkspaceCustomerId
+    logAnalyticsWorkspacePrimarySharedKey: listKeys(logAnalyticsWorkspaceResource.id, logAnalyticsWorkspaceResource.apiVersion).primarySharedKey
   }
 }
 
@@ -137,49 +140,52 @@ module backendApiApp 'containerApp.bicep' = {
     containerAppName: backendApiName
     containerImage: backendApiImage
     targetPort: backendApiPort
-    isPrivateRegistry: true 
+    isPrivateRegistry: true
     minReplicas: 1
     maxReplicas: 2
     containerRegistry: containerRegistry
     containerRegistryUsername: containerRegistryUsername
     registryPassName: registryPassName
     revisionMode: 'Single'
-    secList: [
-      {
-        name: registryPassName
-        value: containerRegistryPassword
-      }
-      {
-        name: 'cosmosdb-key'
-        value: listKeys(cosmosdbResource.id, cosmosdbResource.apiVersion).primaryMasterKey
-      }
-      {
-        name: 'appinsights-key'
-        value: appInsightsResource.properties.InstrumentationKey
-      }]
+    secListObj: {
+      secArray: [
+        {
+          name: registryPassName
+          value: containerRegistryPassword
+        }
+        {
+          name: 'cosmosdb-key'
+          value: listKeys(cosmosdbResource.id, cosmosdbResource.apiVersion).primaryMasterKey
+        }
+        {
+          name: 'appinsights-key'
+          value: appInsightsResource.properties.InstrumentationKey
+        } ]
+    }
     envList: [
-        {
-          name: 'cosmosDb__accountUrl'
-          value: cosmosdb.outputs.documentEndpoint
-        }
-        {
-          name: 'ApplicationInsights__InstrumentationKey'
-          secretRef: 'appinsights-key'
-        }
-        {
-          name: 'cosmosDb__key'
-          secretRef: 'cosmosdb-key'
-        }]
+      {
+        name: 'cosmosDb__accountUrl'
+        value: cosmosdb.outputs.documentEndpoint
+      }
+      {
+        name: 'ApplicationInsights__InstrumentationKey'
+        secretRef: 'appinsights-key'
+      }
+      {
+        name: 'cosmosDb__key'
+        secretRef: 'cosmosdb-key'
+      } ]
   }
 }
 
-  // Frontend WebApp App
+// Frontend WebApp App
 module frontendWebAppApp 'containerApp.bicep' = {
   name: '${deployment().name}--${frontendWebAppName}'
   dependsOn: [
     environment
     backendApiApp
     appInsights
+    appInsightsResource
   ]
   params: {
     enableIngress: true
@@ -189,31 +195,33 @@ module frontendWebAppApp 'containerApp.bicep' = {
     containerAppName: frontendWebAppName
     containerImage: frontendWebAppImage
     targetPort: frontendWebAppPort
-    isPrivateRegistry: true 
+    isPrivateRegistry: true
     minReplicas: 1
     maxReplicas: 2
     containerRegistry: containerRegistry
     containerRegistryUsername: containerRegistryUsername
     registryPassName: registryPassName
     revisionMode: 'Single'
-    secList: [
-      {
-        name: registryPassName
-        value: containerRegistryPassword
-      }
-      {
-        name: 'appinsights-key'
-        value: appInsightsResource.properties.InstrumentationKey
-      }]
-    envList: [
+    secListObj: {
+      secArray: [
         {
-          name: 'ApplicationInsights__InstrumentationKey'
-          secretRef: 'appinsights-key'
+          name: registryPassName
+          value: containerRegistryPassword
         }
         {
-          name: 'BackendApiConfig__BaseUrlExternalHttp'
-          value: backendApiApp.outputs.fqdn
-        }]
+          name: 'appinsights-key'
+          value: appInsightsResource.properties.InstrumentationKey
+        } ]
+    }
+    envList: [
+      {
+        name: 'ApplicationInsights__InstrumentationKey'
+        secretRef: 'appinsights-key'
+      }
+      {
+        name: 'BackendApiConfig__BaseUrlExternalHttp'
+        value: backendApiApp.outputs.fqdn
+      } ]
   }
 }
 
@@ -233,7 +241,7 @@ module backendSvcApp 'containerApp.bicep' = {
     containerAppName: backendSvcName
     containerImage: backendSvcImage
     targetPort: backendSvcPort
-    isPrivateRegistry: true 
+    isPrivateRegistry: true
     minReplicas: 1
     maxReplicas: 5
     containerRegistry: containerRegistry
@@ -241,36 +249,38 @@ module backendSvcApp 'containerApp.bicep' = {
     registryPassName: registryPassName
     revisionMode: 'Single'
     useProbes: true
-    secList: [
-      {
-        name: registryPassName
-        value: containerRegistryPassword
-      }
-      {
-        name: 'sendgrid-apikey'
-        value: sendGridApiKey
-      }
-      {
-        name: 'appinsights-key'
-        value: appInsightsResource.properties.InstrumentationKey
-      }
-      {
-        name: 'svcbus-connstring'
-        value: serviceBusConStringValue
-      }]
+    secListObj: {
+      secArray: [
+        {
+          name: registryPassName
+          value: containerRegistryPassword
+        }
+        {
+          name: 'sendgrid-apikey'
+          value: sendGridApiKey
+        }
+        {
+          name: 'appinsights-key'
+          value: appInsightsResource.properties.InstrumentationKey
+        }
+        {
+          name: 'svcbus-connstring'
+          value: serviceBusConStringValue
+        } ]
+    }
     envList: [
-        {
-          name: 'ApplicationInsights__InstrumentationKey'
-          secretRef: 'appinsights-key'
-        }
-        {
-          name: 'SendGrid__ApiKey'
-          secretRef: 'sendgrid-apikey'
-        }
-        {
-          name: 'SendGrid__IntegrationEnabled'
-          value: 'true'
-        }]
+      {
+        name: 'ApplicationInsights__InstrumentationKey'
+        secretRef: 'appinsights-key'
+      }
+      {
+        name: 'SendGrid__ApiKey'
+        secretRef: 'sendgrid-apikey'
+      }
+      {
+        name: 'SendGrid__IntegrationEnabled'
+        value: 'true'
+      } ]
   }
 }
 
@@ -279,6 +289,7 @@ resource statestoreDaprComponent 'Microsoft.App/managedEnvironments/daprComponen
   name: '${environmentName}/statestore'
   dependsOn: [
     environment
+    cosmosdb
   ]
   properties: {
     componentType: 'state.azure.cosmosdb'
@@ -339,6 +350,8 @@ resource periodicjobstatestoreDaprComponent 'Microsoft.App/managedEnvironments/d
   name: '${environmentName}/periodicjobstatestore'
   dependsOn: [
     environment
+    storageAccount
+    storageAccountResource
   ]
   properties: {
     componentType: 'state.azure.blobstorage'
@@ -374,6 +387,7 @@ resource externaltasksmanagerDaprComponent 'Microsoft.App/managedEnvironments/da
   name: '${environmentName}/externaltasksmanager'
   dependsOn: [
     environment
+    storageAccount
   ]
   properties: {
     componentType: 'bindings.azure.storagequeues'
@@ -417,6 +431,7 @@ resource externaltasksblobstoreDaprComponent 'Microsoft.App/managedEnvironments/
   name: '${environmentName}/externaltasksblobstore'
   dependsOn: [
     environment
+    storageAccount
   ]
   properties: {
     componentType: 'bindings.azure.blobstorage'
@@ -460,6 +475,7 @@ resource emaillogsstatestoreDaprComponent 'Microsoft.App/managedEnvironments/dap
   name: '${environmentName}/emaillogsstatestore'
   dependsOn: [
     environment
+    storageAccount
   ]
   properties: {
     componentType: 'state.azure.tablestorage'
@@ -499,6 +515,7 @@ resource pubsubServicebusDaprComponent 'Microsoft.App/managedEnvironments/daprCo
   name: '${environmentName}/dapr-pubsub-servicebus'
   dependsOn: [
     environment
+    serviceBus
   ]
   properties: {
     componentType: 'pubsub.azure.servicebus'
@@ -521,5 +538,3 @@ resource pubsubServicebusDaprComponent 'Microsoft.App/managedEnvironments/daprCo
     ]
   }
 }
-
-

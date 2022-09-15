@@ -6,7 +6,7 @@ param serviceBusName string
 
 var topicName = 'tasksavedtopic'
 
-resource service_bus 'Microsoft.ServiceBus/namespaces@2021-11-01' = {
+resource serviceBus 'Microsoft.ServiceBus/namespaces@2021-11-01' = {
   name: serviceBusName
   location: location
   sku: {
@@ -16,12 +16,10 @@ resource service_bus 'Microsoft.ServiceBus/namespaces@2021-11-01' = {
 
 resource topic 'Microsoft.ServiceBus/namespaces/topics@2021-11-01' = {
   name: topicName
-  parent: service_bus
+  parent: serviceBus
 }
 
-
-
-var listKeysEndpoint = '${service_bus.id}/AuthorizationRules/RootManageSharedAccessKey'
-var sharedAccessKey = '${listKeys(listKeysEndpoint, service_bus.apiVersion).primaryKey}'
-var connectionStringValue = 'Endpoint=sb://${service_bus.name}.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=${sharedAccessKey}'
-output connectionString string = connectionStringValue
+//var listKeysEndpoint = '${serviceBus.id}/AuthorizationRules/RootManageSharedAccessKey'
+//var sharedAccessKey = '${listKeys(listKeysEndpoint, serviceBus.apiVersion).primaryKey}'
+//var connectionStringValue = 'Endpoint=sb://${serviceBus.name}.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=${sharedAccessKey}'
+//output connectionString string = connectionStringValue

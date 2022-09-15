@@ -1,4 +1,4 @@
-param location string = 'eastus'
+param location string = resourceGroup().location
 param workspaceResourceId string 
 param appInsightsName string
 
@@ -12,4 +12,5 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-output appInsightsInstrumentationKey string = appInsights.properties.InstrumentationKey
+//Donot use output params to pass keys for other resources
+//output appInsightsInstrumentationKey string = appInsights.properties.InstrumentationKey

@@ -1,5 +1,5 @@
 param logAnalyticsWorkspaceName string
-param location string = 'eastus'
+param location string = resourceGroup().location
 
 
 resource logAnalyticsWorkspace'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
@@ -16,8 +16,8 @@ resource logAnalyticsWorkspace'Microsoft.OperationalInsights/workspaces@2021-06-
   })
 }
 
-var sharedKey = listKeys(logAnalyticsWorkspace.id, logAnalyticsWorkspace.apiVersion).primarySharedKey
+//var sharedKey = listKeys(logAnalyticsWorkspace.id, logAnalyticsWorkspace.apiVersion).primarySharedKey
 
 output workspaceResourceId string = logAnalyticsWorkspace.id
 output logAnalyticsWorkspaceCustomerId string = logAnalyticsWorkspace.properties.customerId
-output logAnalyticsWorkspacePrimarySharedKey string = sharedKey
+//output logAnalyticsWorkspacePrimarySharedKey string = sharedKey

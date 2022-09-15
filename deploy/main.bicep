@@ -1,5 +1,5 @@
 param appname string = 'taskstrackertest'
-param location string = 'eastus'
+param location string = resourceGroup().location
 
 param backendApiName string = 'tasksmanager-backend-api'
 param backendApiImage string = '${containerRegistry}/${backendApiName}:latest'
@@ -9,7 +9,6 @@ param frontendWebAppName string = 'tasksmanager-frontend-webapp'
 param frontendWebAppImage string = '${containerRegistry}/${frontendWebAppName}:latest'
 param frontendWebAppPort int = 80
 
-
 param backendSvcName string = 'tasksmanager-backend-processor'
 param backendSvcImage string = '${containerRegistry}/${backendSvcName}:latest'
 param backendSvcPort int = 80
@@ -18,62 +17,97 @@ param containerRegistry string = 'taskstrackeracr.azurecr.io'
 param containerRegistryUsername string = 'taskstrackeracr'
 @secure()
 param containerRegistryPassword string = ''
-param registryPassword string = 'registry-password'
+param registryPassName string = 'registry-password'
 
 @secure()
 param sendGridApiKey string = ''
 
 var environmentName = '${appname}-env'
 
+
 // Cosmosdb
+var cosmosDbResName = '${appname}-cosmos'
 module cosmosdb 'cosmosdb.bicep' = {
   name: '${deployment().name}--cosmosdb'
   params: {
-    accountName: '${appname}-cosmos'
+    accountName: cosmosDbResName
     location: location
     primaryRegion: location
     databaseName: 'tasksmanagerdb'
-     containerName: 'taskscollection'
+    containerName: 'taskscollection'
   }
 }
 
 // Servicebus
+var serviceBusResName = appname
 module serviceBus 'serviceBus.bicep' ={
   name: '${deployment().name}--serviceBus'
   params: {
-     serviceBusName: appname
+     serviceBusName: serviceBusResName
       location:location
   }
 }
 
 //StorageAccount
+var storageAccountResName = appname
 module storageAccount 'storageAccount.bicep' ={
   name: '${deployment().name}--storageAccount'
   params: {
-     storageAccountName: appname
+     storageAccountName: storageAccountResName
      location:location
-      externalTasksQueueName: 'external-tasks-queue'
  }
 }
 
 //logAnalyticsWorkspace
+var logAnalyticsWorkspaceResName = '${appname}-logs'
 module logAnalyticsWorkspace 'logAnalyticsWorkspace.bicep' = {
   name: '${deployment().name}--logAnalyticsWorkspace'
   params:{
-     logAnalyticsWorkspaceName: '${appname}-logs'
+     logAnalyticsWorkspaceName: logAnalyticsWorkspaceResName
       location: location
   }
 }
 
 //AppInsights
+var appInsightsResName = '${appname}-ai'
 module appInsights 'appInsights.bicep'={
   name: '${deployment().name}--appInsights'
   params: {
-     appInsightsName: '${appname}-ai'
+     appInsightsName: appInsightsResName
      location: location
       workspaceResourceId: logAnalyticsWorkspace.outputs.workspaceResourceId
   }
 }
+
+//Reference to AppInsights resource
+resource appInsightsResource 'Microsoft.Insights/components@2020-02-02' existing = {
+  name: appInsightsResName
+}
+
+//Reference to cosmosdb resource
+resource cosmosdbResource 'Microsoft.DocumentDB/databaseAccounts@2021-01-15' existing = {
+  name: cosmosDbResName
+}
+
+//Reference to LogAnalytics resource
+resource logAnalyticsWorkspaceResource 'Microsoft.OperationalInsights/workspaces@2021-06-01' existing = {
+  name: logAnalyticsWorkspaceResName
+}
+
+//Reference to ServiceBus resource
+resource serviceBusResource 'Microsoft.ServiceBus/namespaces@2021-11-01' existing = {
+  name: serviceBusResName
+}
+
+//Reference to ServiceBus resource
+resource storageAccountResource 'Microsoft.Storage/storageAccounts@2021-09-01' existing = {
+  name: storageAccountResName
+}
+
+//Build Svc Bus Connection String
+var listKeysEndpoint = '${serviceBusResource.id}/AuthorizationRules/RootManageSharedAccessKey'
+var sharedAccessKey = '${listKeys(listKeysEndpoint, serviceBusResource.apiVersion).primaryKey}'
+var serviceBusConStringValue = 'Endpoint=sb://${serviceBusResName}.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=${sharedAccessKey}'
 
 // Container Apps Environment 
 module environment 'acaEnvironment.bicep' = {
@@ -81,9 +115,9 @@ module environment 'acaEnvironment.bicep' = {
   params: {
     acaEnvironmentName: environmentName
     location: location
-     instrumentationKey: appInsights.outputs.appInsightsInstrumentationKey
+     instrumentationKey: appInsightsResource.properties.InstrumentationKey
       logAnalyticsWorkspaceCustomerId: logAnalyticsWorkspace.outputs.logAnalyticsWorkspaceCustomerId
-       logAnalyticsWorkspacePrimarySharedKey: logAnalyticsWorkspace.outputs.logAnalyticsWorkspacePrimarySharedKey
+       logAnalyticsWorkspacePrimarySharedKey: listKeys(logAnalyticsWorkspaceResource.id, logAnalyticsWorkspaceResource.apiVersion).primarySharedKey
   }
 }
 
@@ -99,7 +133,7 @@ module backendApiApp 'containerApp.bicep' = {
     enableIngress: true
     isExternalIngress: false
     location: location
-    environmentName: environmentName
+    environmentId: environment.outputs.acaEnvironmentId
     containerAppName: backendApiName
     containerImage: backendApiImage
     targetPort: backendApiPort
@@ -108,20 +142,20 @@ module backendApiApp 'containerApp.bicep' = {
     maxReplicas: 2
     containerRegistry: containerRegistry
     containerRegistryUsername: containerRegistryUsername
-    registryPassword: registryPassword
+    registryPassName: registryPassName
     revisionMode: 'Single'
-    secretsList: [
+    secList: [
       {
-        name: registryPassword
+        name: registryPassName
         value: containerRegistryPassword
       }
       {
         name: 'cosmosdb-key'
-        value: cosmosdb.outputs.primaryMasterKey
+        value: listKeys(cosmosdbResource.id, cosmosdbResource.apiVersion).primaryMasterKey
       }
       {
         name: 'appinsights-key'
-        value: appInsights.outputs.appInsightsInstrumentationKey
+        value: appInsightsResource.properties.InstrumentationKey
       }]
     envList: [
         {
@@ -151,7 +185,7 @@ module frontendWebAppApp 'containerApp.bicep' = {
     enableIngress: true
     isExternalIngress: true
     location: location
-    environmentName: environmentName
+    environmentId: environment.outputs.acaEnvironmentId
     containerAppName: frontendWebAppName
     containerImage: frontendWebAppImage
     targetPort: frontendWebAppPort
@@ -160,16 +194,16 @@ module frontendWebAppApp 'containerApp.bicep' = {
     maxReplicas: 2
     containerRegistry: containerRegistry
     containerRegistryUsername: containerRegistryUsername
-    registryPassword: registryPassword
+    registryPassName: registryPassName
     revisionMode: 'Single'
-    secretsList: [
+    secList: [
       {
-        name: registryPassword
+        name: registryPassName
         value: containerRegistryPassword
       }
       {
         name: 'appinsights-key'
-        value: appInsights.outputs.appInsightsInstrumentationKey
+        value: appInsightsResource.properties.InstrumentationKey
       }]
     envList: [
         {
@@ -195,7 +229,7 @@ module backendSvcApp 'containerApp.bicep' = {
     enableIngress: false
     isExternalIngress: false
     location: location
-    environmentName: environmentName
+    environmentId: environment.outputs.acaEnvironmentId
     containerAppName: backendSvcName
     containerImage: backendSvcImage
     targetPort: backendSvcPort
@@ -204,12 +238,12 @@ module backendSvcApp 'containerApp.bicep' = {
     maxReplicas: 5
     containerRegistry: containerRegistry
     containerRegistryUsername: containerRegistryUsername
-    registryPassword: registryPassword
+    registryPassName: registryPassName
     revisionMode: 'Single'
     useProbes: true
-    secretsList: [
+    secList: [
       {
-        name: registryPassword
+        name: registryPassName
         value: containerRegistryPassword
       }
       {
@@ -218,11 +252,11 @@ module backendSvcApp 'containerApp.bicep' = {
       }
       {
         name: 'appinsights-key'
-        value: appInsights.outputs.appInsightsInstrumentationKey
+        value: appInsightsResource.properties.InstrumentationKey
       }
       {
         name: 'svcbus-connstring'
-        value: serviceBus.outputs.connectionString
+        value: serviceBusConStringValue
       }]
     envList: [
         {
@@ -252,7 +286,7 @@ resource statestoreDaprComponent 'Microsoft.App/managedEnvironments/daprComponen
     secrets: [
       {
         name: 'cosmoskey'
-        value: cosmosdb.outputs.primaryMasterKey
+        value: listKeys(cosmosdbResource.id, cosmosdbResource.apiVersion).primaryMasterKey
       }
     ]
     metadata: [
@@ -312,7 +346,7 @@ resource periodicjobstatestoreDaprComponent 'Microsoft.App/managedEnvironments/d
     secrets: [
       {
         name: 'storagekey'
-        value: storageAccount.outputs.storageAccountKey
+        value: storageAccountResource.listKeys().keys[0].value
       }
     ]
     metadata: [
@@ -347,7 +381,7 @@ resource externaltasksmanagerDaprComponent 'Microsoft.App/managedEnvironments/da
     secrets: [
       {
         name: 'storagekey'
-        value: storageAccount.outputs.storageAccountKey
+        value: storageAccountResource.listKeys().keys[0].value
       }
     ]
     metadata: [
@@ -390,7 +424,7 @@ resource externaltasksblobstoreDaprComponent 'Microsoft.App/managedEnvironments/
     secrets: [
       {
         name: 'storagekey'
-        value: storageAccount.outputs.storageAccountKey
+        value: storageAccountResource.listKeys().keys[0].value
       }
     ]
     metadata: [
@@ -433,7 +467,7 @@ resource emaillogsstatestoreDaprComponent 'Microsoft.App/managedEnvironments/dap
     secrets: [
       {
         name: 'storagekey'
-        value: storageAccount.outputs.storageAccountKey
+        value: storageAccountResource.listKeys().keys[0].value
       }
     ]
     metadata: [
@@ -472,7 +506,7 @@ resource pubsubServicebusDaprComponent 'Microsoft.App/managedEnvironments/daprCo
     secrets: [
       {
         name: 'sb-root-connectionstring'
-        value: serviceBus.outputs.connectionString
+        value: serviceBusConStringValue
       }
     ]
     metadata: [

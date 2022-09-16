@@ -24,57 +24,22 @@ param sendGridApiKey string = ''
 
 var environmentName = '${appname}-env'
 
-// Cosmosdb
-var cosmosDbResName = '${appname}-cosmos'
-module cosmosdb 'cosmosdb.bicep' = {
-  name: '${deployment().name}--cosmosdb'
-  params: {
-    accountName: cosmosDbResName
-    location: location
-    primaryRegion: location
-    databaseName: 'tasksmanagerdb'
-    containerName: 'taskscollection'
-  }
-}
-
-// Servicebus
-var serviceBusResName = appname
-module serviceBus 'serviceBus.bicep' = {
-  name: '${deployment().name}--serviceBus'
-  params: {
-    serviceBusName: serviceBusResName
-    location: location
-  }
-}
-
-//StorageAccount
-var storageAccountResName = appname
-module storageAccount 'storageAccount.bicep' = {
-  name: '${deployment().name}--storageAccount'
-  params: {
-    storageAccountName: storageAccountResName
-    location: location
-  }
-}
-
-//logAnalyticsWorkspace
-var logAnalyticsWorkspaceResName = '${appname}-logs'
-module logAnalyticsWorkspace 'logAnalyticsWorkspace.bicep' = {
-  name: '${deployment().name}--logAnalyticsWorkspace'
-  params: {
-    logAnalyticsWorkspaceName: logAnalyticsWorkspaceResName
-    location: location
-  }
-}
-
-//AppInsights
 var appInsightsResName = '${appname}-ai'
-module appInsights 'appInsights.bicep' = {
-  name: '${deployment().name}--appInsights'
+var cosmosDbResName = '${appname}-cosmos'
+var logAnalyticsWorkspaceResName = '${appname}-logs'
+var serviceBusResName = appname
+var storageAccountResName = appname
+
+module primaryResources 'primaryResources.bicep' = {
+  dependsOn: []
+  name: '${deployment().name}--primaryResources'
   params: {
-    appInsightsName: appInsightsResName
     location: location
-    workspaceResourceId: logAnalyticsWorkspace.outputs.workspaceResourceId
+    logAnalyticsWorkspaceResName: logAnalyticsWorkspaceResName
+    appInsightsResName: appInsightsResName
+    cosmosDbResName: cosmosDbResName
+    serviceBusResName: serviceBusResName
+    storageAccountResName: storageAccountResName
   }
 }
 
@@ -110,16 +75,15 @@ var serviceBusConStringValue = 'Endpoint=sb://${serviceBusResName}.servicebus.wi
 
 // Container Apps Environment 
 module environment 'acaEnvironment.bicep' = {
-dependsOn: [
-appInsights
-logAnalyticsWorkspaceResource
-]
+  dependsOn: [
+    primaryResources
+  ]
   name: '${deployment().name}--acaenvironment'
   params: {
     acaEnvironmentName: environmentName
     location: location
     instrumentationKey: appInsightsResource.properties.InstrumentationKey
-    logAnalyticsWorkspaceCustomerId: logAnalyticsWorkspace.outputs.logAnalyticsWorkspaceCustomerId
+    logAnalyticsWorkspaceCustomerId: primaryResources.outputs.logAnalyticsWorkspaceCustomerId
     logAnalyticsWorkspacePrimarySharedKey: listKeys(logAnalyticsWorkspaceResource.id, logAnalyticsWorkspaceResource.apiVersion).primarySharedKey
   }
 }
@@ -129,8 +93,7 @@ module backendApiApp 'containerApp.bicep' = {
   name: '${deployment().name}--${backendApiName}'
   dependsOn: [
     environment
-    appInsights
-    cosmosdb
+    primaryResources
   ]
   params: {
     enableIngress: true
@@ -165,7 +128,7 @@ module backendApiApp 'containerApp.bicep' = {
     envList: [
       {
         name: 'cosmosDb__accountUrl'
-        value: cosmosdb.outputs.documentEndpoint
+        value: primaryResources.outputs.cosmosDbDocumentEndpoint
       }
       {
         name: 'ApplicationInsights__InstrumentationKey'
@@ -184,8 +147,7 @@ module frontendWebAppApp 'containerApp.bicep' = {
   dependsOn: [
     environment
     backendApiApp
-    appInsights
-    appInsightsResource
+    primaryResources
   ]
   params: {
     enableIngress: true
@@ -230,8 +192,7 @@ module backendSvcApp 'containerApp.bicep' = {
   name: '${deployment().name}--${backendSvcName}'
   dependsOn: [
     environment
-    appInsights
-    serviceBus
+    primaryResources
   ]
   params: {
     enableIngress: false
@@ -289,7 +250,7 @@ resource statestoreDaprComponent 'Microsoft.App/managedEnvironments/daprComponen
   name: '${environmentName}/statestore'
   dependsOn: [
     environment
-    cosmosdb
+    primaryResources
   ]
   properties: {
     componentType: 'state.azure.cosmosdb'
@@ -303,7 +264,7 @@ resource statestoreDaprComponent 'Microsoft.App/managedEnvironments/daprComponen
     metadata: [
       {
         name: 'url'
-        value: cosmosdb.outputs.documentEndpoint
+        value: primaryResources.outputs.cosmosDbDocumentEndpoint
       }
       {
         name: 'database'
@@ -350,8 +311,7 @@ resource periodicjobstatestoreDaprComponent 'Microsoft.App/managedEnvironments/d
   name: '${environmentName}/periodicjobstatestore'
   dependsOn: [
     environment
-    storageAccount
-    storageAccountResource
+     primaryResources
   ]
   properties: {
     componentType: 'state.azure.blobstorage'
@@ -365,7 +325,7 @@ resource periodicjobstatestoreDaprComponent 'Microsoft.App/managedEnvironments/d
     metadata: [
       {
         name: 'accountName'
-        value: storageAccount.outputs.storageAccountName
+        value: storageAccountResName
       }
       {
         name: 'containerName'
@@ -387,7 +347,7 @@ resource externaltasksmanagerDaprComponent 'Microsoft.App/managedEnvironments/da
   name: '${environmentName}/externaltasksmanager'
   dependsOn: [
     environment
-    storageAccount
+    primaryResources
   ]
   properties: {
     componentType: 'bindings.azure.storagequeues'
@@ -401,7 +361,7 @@ resource externaltasksmanagerDaprComponent 'Microsoft.App/managedEnvironments/da
     metadata: [
       {
         name: 'storageAccount'
-        value: storageAccount.outputs.storageAccountName
+        value: storageAccountResName
       }
       {
         name: 'queue'
@@ -431,7 +391,7 @@ resource externaltasksblobstoreDaprComponent 'Microsoft.App/managedEnvironments/
   name: '${environmentName}/externaltasksblobstore'
   dependsOn: [
     environment
-    storageAccount
+    primaryResources
   ]
   properties: {
     componentType: 'bindings.azure.blobstorage'
@@ -445,7 +405,7 @@ resource externaltasksblobstoreDaprComponent 'Microsoft.App/managedEnvironments/
     metadata: [
       {
         name: 'storageAccount'
-        value: storageAccount.outputs.storageAccountName
+        value: storageAccountResName
       }
       {
         name: 'container'
@@ -475,7 +435,7 @@ resource emaillogsstatestoreDaprComponent 'Microsoft.App/managedEnvironments/dap
   name: '${environmentName}/emaillogsstatestore'
   dependsOn: [
     environment
-    storageAccount
+    primaryResources
   ]
   properties: {
     componentType: 'state.azure.tablestorage'
@@ -489,7 +449,7 @@ resource emaillogsstatestoreDaprComponent 'Microsoft.App/managedEnvironments/dap
     metadata: [
       {
         name: 'accountName'
-        value: storageAccount.outputs.storageAccountName
+        value: storageAccountResName
       }
       {
         name: 'tableName'
@@ -515,7 +475,7 @@ resource pubsubServicebusDaprComponent 'Microsoft.App/managedEnvironments/daprCo
   name: '${environmentName}/dapr-pubsub-servicebus'
   dependsOn: [
     environment
-    serviceBus
+    primaryResources
   ]
   properties: {
     componentType: 'pubsub.azure.servicebus'

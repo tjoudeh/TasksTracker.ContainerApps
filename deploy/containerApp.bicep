@@ -11,7 +11,8 @@ param enableIngress bool
 param registryPassName string
 param minReplicas int = 0
 param maxReplicas int = 1
-param secList array = []
+@secure()
+param secListObj object
 param envList array = []
 param revisionMode string = 'Single'
 param useProbes bool = false
@@ -23,7 +24,7 @@ resource containerApp 'Microsoft.App/containerApps@2022-03-01' = {
     managedEnvironmentId: environmentId
     configuration: {
       activeRevisionsMode: revisionMode
-      secrets: secList
+      secrets: secListObj.secArray
       registries: isPrivateRegistry ? [
         {
           server: containerRegistry

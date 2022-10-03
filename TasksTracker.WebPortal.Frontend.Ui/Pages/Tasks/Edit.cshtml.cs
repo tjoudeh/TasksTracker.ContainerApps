@@ -1,6 +1,8 @@
 using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Hosting;
+using System.Text.Json;
 using TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks.Models;
 
 namespace TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks
@@ -69,6 +71,29 @@ namespace TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks
             }
 
             return RedirectToPage("./Index");
+        }
+
+        public IActionResult OnGetDownloadFile(string fileNameWithoutExtension)
+        {
+            
+            byte[] bytes;
+            var fileName = Path.ChangeExtension(fileNameWithoutExtension, ".json");
+
+            var directory = Path.Combine(Directory.GetCurrentDirectory(), "attachments");
+
+            var filePath = Path.Combine(directory, fileName);
+
+            try{
+                    //Read the File data into Byte Array.
+                    bytes = System.IO.File.ReadAllBytes(filePath);
+                    //Send the File to Download.
+                    return File(bytes, "application/octet-stream", fileName);
+            }
+            catch(FileNotFoundException){
+                 var result = new NotFoundObjectResult(new { message = "File Not Found"});
+                 return result;
+            }
+
         }
     }
 }

@@ -29,6 +29,7 @@ var cosmosDbResName = '${appname}-cosmos'
 var logAnalyticsWorkspaceResName = '${appname}-logs'
 var serviceBusResName = appname
 var storageAccountResName = appname
+var storageNameMount = 'permanent-storage-mount'
 
 module primaryResources 'primaryResources.bicep' = {
   dependsOn: []
@@ -85,6 +86,9 @@ module environment 'acaEnvironment.bicep' = {
     instrumentationKey: appInsightsResource.properties.InstrumentationKey
     logAnalyticsWorkspaceCustomerId: primaryResources.outputs.logAnalyticsWorkspaceCustomerId
     logAnalyticsWorkspacePrimarySharedKey: listKeys(logAnalyticsWorkspaceResource.id, logAnalyticsWorkspaceResource.apiVersion).primarySharedKey
+    storageAccountResName: storageAccountResName
+    storageAccountResourceKey: storageAccountResource.listKeys().keys[0].value
+    storageNameMount: storageNameMount
   }
 }
 
@@ -110,6 +114,7 @@ module backendApiApp 'containerApp.bicep' = {
     containerRegistryUsername: containerRegistryUsername
     registryPassName: registryPassName
     revisionMode: 'Single'
+    storageNameMount: storageNameMount
     secListObj: {
       secArray: [
         {
@@ -164,6 +169,7 @@ module frontendWebAppApp 'containerApp.bicep' = {
     containerRegistryUsername: containerRegistryUsername
     registryPassName: registryPassName
     revisionMode: 'Single'
+    storageNameMount: storageNameMount
     secListObj: {
       secArray: [
         {
@@ -210,6 +216,7 @@ module backendSvcApp 'containerApp.bicep' = {
     registryPassName: registryPassName
     revisionMode: 'Single'
     useProbes: true
+    storageNameMount: storageNameMount
     secListObj: {
       secArray: [
         {
@@ -495,6 +502,46 @@ resource pubsubServicebusDaprComponent 'Microsoft.App/managedEnvironments/daprCo
     scopes: [
       backendSvcName
       backendApiName
+    ]
+  }
+}
+  
+//Attachments State store Component
+resource attachmentsstatestoreDaprComponent 'Microsoft.App/managedEnvironments/daprComponents@2022-03-01' = {
+  name: '${environmentName}/attachmentsstatestore'
+  dependsOn: [
+    environment
+     primaryResources
+  ]
+  properties: {
+    componentType: 'state.azure.blobstorage'
+    version: 'v1'
+    secrets: [
+      {
+        name: 'storagekey'
+        value: storageAccountResource.listKeys().keys[0].value
+      }
+    ]
+    metadata: [
+      {
+        name: 'accountName'
+        value: storageAccountResName
+      }
+      {
+        name: 'containerName'
+        value: 'attachmentscontainer'
+      }
+      {
+        name: 'contentType'
+        value: 'text/json'
+      }
+      {
+        name: 'accountKey'
+        secretRef: 'storagekey'
+      }
+    ]
+    scopes: [
+      backendSvcName
     ]
   }
 }

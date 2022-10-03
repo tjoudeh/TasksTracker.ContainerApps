@@ -1,4 +1,5 @@
-﻿using Dapr.Client;
+﻿using System.Text.Json;
+using Dapr.Client;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SendGrid;
@@ -37,6 +38,8 @@ namespace TasksTracker.Processor.Backend.Svc.Controllers
 
             var sendGridResponse = await SendEmail(taskModel);
 
+            await CopyFileFromFileShare(taskModel.TaskId.ToString());
+
             if (sendGridResponse.Item1)
             {
                 return Ok($"SendGrid response staus code: {sendGridResponse.Item1}");
@@ -59,7 +62,7 @@ namespace TasksTracker.Processor.Backend.Svc.Controllers
             var plainTextContent = $"Task '{taskModel.TaskName}' is assigned to you. Task should be completed by the end of: {taskModel.TaskDueDate.ToString("dd/MM/yyyy")}";
             var htmlContent = plainTextContent;
             var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
-           
+
             //Send actual email using SendGrid API (Disbled when running load test)
             if (integrationEnabled)
             {
@@ -80,7 +83,7 @@ namespace TasksTracker.Processor.Backend.Svc.Controllers
 
                 await _daprClient.SaveStateAsync(STORE_NAME,
                                                         $"{Guid.NewGuid().ToString()}_{taskModel.TaskAssignedTo}",
-                                                        new EmailLogModel() { TaskId = taskModel.TaskId,  EmailTo = to.Email, EmailContent = plainTextContent });
+                                                        new EmailLogModel() { TaskId = taskModel.TaskId, EmailTo = to.Email, EmailContent = plainTextContent });
 
                 _logger.LogInformation("Email log for task with id: {0} saved successfuly", taskModel.TaskId);
             }
@@ -91,6 +94,25 @@ namespace TasksTracker.Processor.Backend.Svc.Controllers
 
             return new Tuple<bool, string>(sendEmailResponse, sendEmailStatusCode.ToString());
 
+        }
+
+        private async Task CopyFileFromFileShare(string fileNameWithoutExtension)
+        {
+            var attachmentsStoreName = "attachmentsstatestore";
+
+            var fileName = Path.ChangeExtension(fileNameWithoutExtension, ".json");
+
+            _logger.LogInformation("Reading attachment from file share and storing it on Azure Storage for file name:'{0}'", fileName);
+
+            var directory = Path.Combine(Directory.GetCurrentDirectory(), "attachments");
+
+            var filePath = Path.Combine(directory, fileName);
+
+            _logger.LogInformation("Opening attachment file from location:'{0}'", filePath);
+
+            var fileContent = await System.IO.File.ReadAllTextAsync(filePath);
+
+            await _daprClient.SaveStateAsync(attachmentsStoreName, fileName, JsonSerializer.Deserialize<TaskModel>(fileContent));
         }
     }
 

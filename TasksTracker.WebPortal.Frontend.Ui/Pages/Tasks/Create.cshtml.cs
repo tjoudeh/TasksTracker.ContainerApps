@@ -1,4 +1,5 @@
 using Dapr.Client;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks.Models;
@@ -10,20 +11,23 @@ namespace TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks
 
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly DaprClient _daprClient;
+        private TelemetryClient _telemetryClient;
 
-        public CreateModel(IHttpClientFactory httpClientFactory, DaprClient daprClient)
+        public CreateModel(IHttpClientFactory httpClientFactory, DaprClient daprClient, TelemetryClient telemetryClient)
         {
             _httpClientFactory = httpClientFactory;
             _daprClient = daprClient;
+            _telemetryClient = telemetryClient;
         }
 
         public IActionResult OnGet()
         {
+            _telemetryClient.TrackEvent("CreateNewTask");
             return Page();
         }
 
         [BindProperty]
-        public TaskAddModel TaskAdd { get; set; }
+        public TaskAddModel? TaskAdd { get; set; }
 
         public async Task<IActionResult> OnPostAsync()
         {

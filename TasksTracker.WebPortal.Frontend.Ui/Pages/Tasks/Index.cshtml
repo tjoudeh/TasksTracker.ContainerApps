@@ -6,6 +6,7 @@
 <h1>Tasks Manager</h1>
 <h4>Tasks for (@Model.TasksCreatedBy)</h4>
 <form method="post">
+    <a asp-page="Create" class="btn btn-primary">Create New <i class="bi bi-plus-circle"></i></a>
     <table class="table">
         <thead>
             <tr>
@@ -26,17 +27,16 @@
                         <td><a asp-page="./Edit" asp-route-id="@task.TaskId">@task.TaskName</a></td>
                         <td>@task.TaskDueDate.Date.ToString("dd-MM-yyyy")</td>
                         <td>@task.TaskAssignedTo</td>
-                        <td>@Html.CheckBox("IsCompleted",@task.IsCompleted)</td>
-                        <td>@Html.CheckBox("IsOverDue",@task.IsOverDue)</td>
+                        <td>@Html.CheckBox("IsCompleted",@task.IsCompleted,(object)new { @disabled = "disabled" })</td>
+                        <td>@Html.CheckBox("IsOverDue",@task.IsOverDue, (object)new { @disabled = "disabled" })</td>
                         <td>
-                            <button type="submit" asp-page-handler="complete" asp-route-id="@task.TaskId">Complete</button>
-
-                            <button type="submit" asp-page-handler="delete" asp-route-id="@task.TaskId">Delete</button>
+                            <button type="submit" asp-page-handler="complete" asp-route-id="@task.TaskId" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Complete</button>
+                            <a class="btn btn-primary" download href="@Url.Page("Index", "DownloadFile", new { fileNameWithoutExtension = @task.TaskId })"><i class="bi bi-file-arrow-down"></i> Download</a>
+                            <button type="submit" asp-page-handler="delete" asp-route-id="@task.TaskId" class="btn btn-danger"><i class="bi bi-x-circle"></i> Delete</button>
                         </td>
                     </tr>
                 }
             }
         </tbody>
     </table>
-    <a asp-page="Create">Create New</a>
 </form>

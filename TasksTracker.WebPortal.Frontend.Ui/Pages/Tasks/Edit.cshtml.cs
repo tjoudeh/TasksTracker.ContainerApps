@@ -1,4 +1,5 @@
 using Dapr.Client;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Hosting;
@@ -11,14 +12,16 @@ namespace TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly DaprClient _daprClient;
+        private TelemetryClient _telemetryClient;
 
         [BindProperty]
         public TaskUpdateModel? TaskUpdate { get; set; }
 
-        public EditModel(IHttpClientFactory httpClientFactory, DaprClient daprClient)
+        public EditModel(IHttpClientFactory httpClientFactory, DaprClient daprClient, TelemetryClient telemetryClient)
         {
             _httpClientFactory = httpClientFactory;
             _daprClient = daprClient;
+            _telemetryClient = telemetryClient;
         }
 
         public async Task<IActionResult> OnGetAsync(Guid? id)
@@ -75,7 +78,7 @@ namespace TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks
 
         public IActionResult OnGetDownloadFile(string fileNameWithoutExtension)
         {
-            
+
             byte[] bytes;
             var fileName = Path.ChangeExtension(fileNameWithoutExtension, ".json");
 
@@ -83,15 +86,20 @@ namespace TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks
 
             var filePath = Path.Combine(directory, fileName);
 
-            try{
-                    //Read the File data into Byte Array.
-                    bytes = System.IO.File.ReadAllBytes(filePath);
-                    //Send the File to Download.
-                    return File(bytes, "application/octet-stream", fileName);
+            try
+            {
+                //Read the File data into Byte Array.
+                bytes = System.IO.File.ReadAllBytes(filePath);
+                
+                _telemetryClient.TrackEvent("DownloadRawTaskFromEdit");
+
+                //Send the File to Download.
+                return File(bytes, "application/octet-stream", fileName);
             }
-            catch(FileNotFoundException){
-                 var result = new NotFoundObjectResult(new { message = "File Not Found"});
-                 return result;
+            catch (FileNotFoundException)
+            {
+                var result = new NotFoundObjectResult(new { message = "File Not Found" });
+                return result;
             }
 
         }

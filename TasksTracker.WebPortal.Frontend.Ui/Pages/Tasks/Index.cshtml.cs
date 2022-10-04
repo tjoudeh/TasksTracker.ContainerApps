@@ -1,4 +1,5 @@
 using Dapr.Client;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks.Models;
@@ -9,21 +10,23 @@ namespace TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks
     {
 
         private readonly IHttpClientFactory _httpClientFactory;
-         private readonly DaprClient _daprClient;
+        private readonly DaprClient _daprClient;
         public List<TaskModel>? TasksList { get; set; }
+        private TelemetryClient _telemetryClient;
 
         [BindProperty]
         public string? TasksCreatedBy { get; set; }
 
-        public IndexModel(IHttpClientFactory httpClientFactory, DaprClient daprClient)
+        public IndexModel(IHttpClientFactory httpClientFactory, DaprClient daprClient, TelemetryClient telemetryClient)
         {
             _httpClientFactory = httpClientFactory;
-             _daprClient = daprClient;
+            _daprClient = daprClient;
+            _telemetryClient = telemetryClient;
         }
 
         public async Task OnGetAsync()
         {
-           
+
             TasksCreatedBy = Request.Cookies["TasksCreatedByCookie"];
 
             //Invoke via internal URL (Not Dapr)
@@ -40,11 +43,11 @@ namespace TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks
             // Invoke via DaprSDK (Invoke HTTP services using HttpClient) --> Use Dapr Appi ID (Option 1)
             //var daprHttpClient = DaprClient.CreateInvokeHttpClient(appId: "tasksmanager-backend-api"); 
             //TasksList = await daprHttpClient.GetFromJsonAsync<List<TaskModel>>($"api/tasks?createdBy={TasksCreatedBy}");
-            
+
             // Invoke via DaprSDK (Invoke HTTP services using HttpClient) --> Specify Custom Port (Option 2)
             // var daprHttpClient = DaprClient.CreateInvokeHttpClient(daprEndpoint: "http://localhost:3500"); 
             // TasksList = await daprHttpClient.GetFromJsonAsync<List<TaskModel>>($"http://tasksmanager-backend-api/api/tasks?createdBy={TasksCreatedBy}");
-            
+
 
             // Invoke via DaprSDK (Invoke HTTP services using DaprClient)
             TasksList = await _daprClient.InvokeMethodAsync<List<TaskModel>>(HttpMethod.Get, "tasksmanager-backend-api", $"api/tasks?createdBy={TasksCreatedBy}");
@@ -57,10 +60,12 @@ namespace TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks
             // var httpClient = _httpClientFactory.CreateClient("BackEndApiExternal");
             // var result = await httpClient.DeleteAsync($"api/tasks/{id}");
 
+            _telemetryClient.TrackEvent("DeleteTask");
+
             //Dapr SideCar Invocation
             await _daprClient.InvokeMethodAsync(HttpMethod.Delete, "tasksmanager-backend-api", $"api/tasks/{id}");
 
-            return RedirectToPage();          
+            return RedirectToPage();
         }
 
         public async Task<IActionResult> OnPostCompleteAsync(Guid id)
@@ -68,6 +73,8 @@ namespace TasksTracker.WebPortal.Frontend.Ui.Pages.Tasks
             // direct svc to svc http request
             // var httpClient = _httpClientFactory.CreateClient("BackEndApiExternal");
             // var result = await httpClient.PutAsync($"api/tasks/{id}/markcomplete", null);
+
+            _telemetryClient.TrackEvent("MarkTaskComplete");
 
             //Dapr SideCar Invocation
             await _daprClient.InvokeMethodAsync(HttpMethod.Put, "tasksmanager-backend-api", $"api/tasks/{id}/markcomplete");

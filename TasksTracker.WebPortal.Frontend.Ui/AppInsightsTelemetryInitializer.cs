@@ -8,11 +8,10 @@ namespace TasksTracker.WebPortal.Frontend.Ui
     {
         public void Initialize(ITelemetry telemetry)
         {
-            var assembly = Assembly.GetExecutingAssembly();
-            var informationVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-
             if (string.IsNullOrEmpty(telemetry.Context.Cloud.RoleName))
             {
+                var assembly = Assembly.GetExecutingAssembly();
+                var informationVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
                 //set custom role name here
                 telemetry.Context.Cloud.RoleName = "tasksmanager-frontend-webapp";
                 telemetry.Context.Component.Version = informationVersion;

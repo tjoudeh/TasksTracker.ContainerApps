@@ -1,6 +1,8 @@
-﻿using System.Text.Json.Nodes;
+﻿using System.Text.Json;
+using System.Text.Json.Nodes;
 using Dapr.Client;
 using Microsoft.Azure.Cosmos;
+using Newtonsoft.Json;
 using TasksTracker.TasksManager.Backend.Api.Models;
 
 namespace TasksTracker.TasksManager.Backend.Api.Services
@@ -38,6 +40,10 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
             _logger.LogInformation("Save a new task with name: '{0}' to state store", taskModel.TaskName);
 
             await _daprClient.SaveStateAsync<TaskModel>(STORE_NAME, taskModel.TaskId.ToString(), taskModel);
+  
+            _logger.LogInformation("Write task file as json with name: '{0}' to permanent file storage", taskModel.TaskName);
+
+            await WriteFileAsync(taskModel);
 
             await PublishTaskSavedEvent(taskModel);
 
@@ -63,9 +69,6 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 
         public async Task<List<TaskModel>> GetTasksByCreator(string createdBy)
         {
-            //Currently, the query API for Cosmos DB is not working when deploying it to Azure Container Apps, this is an open
-            //issue and prodcut team is wokring on it. Details of the issue is here: https://github.com/microsoft/azure-container-apps/issues/155
-            //Due to this issue, we will query directly the cosmos db to list tasks per created by user.
 
             _logger.LogInformation("Query tasks created by: '{0}'", createdBy);
 
@@ -202,5 +205,29 @@ namespace TasksTracker.TasksManager.Backend.Api.Services
 
             await _daprClient.PublishEventAsync(PUBSUB_SVCBUS_NAME, TASK_SAVED_TOPICNAME, taskModel);
         }
+
+        public async Task WriteFileAsync(TaskModel taskModel)
+        {
+            var options = new JsonSerializerOptions()
+            {
+                WriteIndented = true
+            };
+            
+            var jsonString = System.Text.Json.JsonSerializer.Serialize(taskModel, options);
+
+            var directory = Path.Combine(Directory.GetCurrentDirectory(), "attachments");
+
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            var filePath = Path.ChangeExtension(Path.Combine(directory, taskModel.TaskId.ToString()), ".json");
+
+            _logger.LogInformation("Trying to write file for task with id '{0}' on path {1}", taskModel.TaskId.ToString(),filePath);
+
+            await File.WriteAllTextAsync(filePath, jsonString);
+        }
+        
     }
 }

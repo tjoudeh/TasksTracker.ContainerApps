@@ -22,5 +22,20 @@ resource external_queue 'Microsoft.Storage/storageAccounts/queueServices/queues@
   parent: storageQueues
 }
 
+resource fileServices 'Microsoft.Storage/storageAccounts/fileServices@2021-09-01' = {
+  name: 'default'
+  parent: storageAccount
+}
+
+resource permanentFileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2022-05-01' = {
+  name: 'permanent-file-share'
+  parent: fileServices
+  properties: {
+    accessTier: 'TransactionOptimized'
+    enabledProtocols: 'SMB'
+    shareQuota: 1024
+  }
+}
+
 //var storageAccountKeyValue = storageAccount.listKeys().keys[0].value
 //output storageAccountKey string = storageAccountKeyValue

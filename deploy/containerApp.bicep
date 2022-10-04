@@ -16,6 +16,7 @@ param secListObj object
 param envList array = []
 param revisionMode string = 'Single'
 param useProbes bool = false
+param storageNameMount string
 
 resource containerApp 'Microsoft.App/containerApps@2022-03-01' = {
   name: containerAppName
@@ -71,6 +72,19 @@ resource containerApp 'Microsoft.App/containerApps@2022-03-01' = {
                 failureThreshold: 3
             }
           ] : null
+          volumeMounts: [
+            { 
+               mountPath:'/app/attachments'
+               volumeName:'azure-file-volume'
+            }
+          ]
+        }
+      ]
+      volumes: [
+        {
+           name: 'azure-file-volume'
+           storageName: storageNameMount
+           storageType: 'AzureFile'
         }
       ]
       scale: {

@@ -34,7 +34,9 @@
 
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
+                <a class="btn btn-primary" download href="@Url.Page("Edit", "DownloadFile", new { fileNameWithoutExtension = Model.TaskUpdate!.TaskId })">Download Raw</a>
             </div>
+
         </form>
     </div>
 </div>
